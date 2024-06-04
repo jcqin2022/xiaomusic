@@ -6,8 +6,7 @@ a = Analysis(
     pathex=['xiaomusic'],
     binaries=[],
     datas=[
-		('xiaomusic/static', 'xiaomusic/static'),
-		('config.json', '.')
+		('xiaomusic/static', 'xiaomusic/static')
 	],
     hiddenimports=[],
     hookspath=[],

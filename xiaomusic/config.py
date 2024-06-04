@@ -5,6 +5,8 @@ import json
 import os
 from dataclasses import dataclass, field
 from typing import Any, Iterable
+#from res_loader import get_resource_path
+from xiaomusic.res_loader import get_resource_path
 
 from xiaomusic.utils import validate_proxy
 
@@ -113,7 +115,9 @@ class Config:
     def from_options(cls, options: argparse.Namespace) -> Config:
         config = {}
         if options.config:
-            config = cls.read_from_file(options.config)
+            #get merged config path
+            config_path = get_resource_path(options.config)
+            config = cls.read_from_file(config_path)
         for key, value in vars(options).items():
             if value is not None and key in cls.__dataclass_fields__:
                 config[key] = value
