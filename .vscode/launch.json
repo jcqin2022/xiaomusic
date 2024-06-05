@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/xiaomusic.py",
             "console": "integratedTerminal",
-            "args": ["--config","./config.json"],
+            //"args": ["--config","./config.json"],
             "cwd": "${workspaceFolder}"
         }
     ]

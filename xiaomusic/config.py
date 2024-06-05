@@ -122,7 +122,7 @@ class Config:
                 config_path = "config.json"
             if config_path:
                 #get merged config path
-                config_path = get_resource_path(options.config)
+                config_path = get_resource_path(config_path)
                 config = cls.read_from_file(config_path)
         except FileNotFoundError:
             print(f"The file {config_path} does not exist.")
