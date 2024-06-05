@@ -52,6 +52,12 @@ $(function(){
     let cmd = "播放歌曲"+search_key+"|"+filename;
     sendcmd(cmd);
   });
+  $("#search").on("click", () => {
+    var search_key = $("#music-name").val();
+    var filename=$("#music-filename").val();
+    let cmd = "下载歌曲"+search_key+"|"+filename;
+    sendcmd(cmd);
+  });
 
   $("#volume").on('input', function () {
     var value = $(this).val();

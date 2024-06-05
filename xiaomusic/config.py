@@ -38,6 +38,7 @@ DEFAULT_COMMAND = ("5-1", "5-5", "2-1")
 KEY_WORD_DICT = {
     "播放歌曲": "play",
     "放歌曲": "play",
+    "下载歌曲": "down",
     "下一首": "play_next",
     "单曲循环": "set_play_type_one",
     "全部循环": "set_play_type_all",
@@ -61,6 +62,7 @@ KEY_MATCH_ORDER = [
     "分钟后关机",
     "播放歌曲",
     "放歌曲",
+    "下载歌曲",
     "下一首",
     "单曲循环",
     "全部循环",
@@ -85,7 +87,7 @@ class Config:
     cookie: str = ""
     use_command: bool = False
     verbose: bool = False
-    music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
+    music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "./music")
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))
     proxy: str | None = os.getenv("XIAOMUSIC_PROXY", None)
@@ -114,10 +116,18 @@ class Config:
     @classmethod
     def from_options(cls, options: argparse.Namespace) -> Config:
         config = {}
-        if options.config:
-            #get merged config path
-            config_path = get_resource_path(options.config)
-            config = cls.read_from_file(config_path)
+        config_path = options.config
+        try:
+            if not config_path:
+                config_path = "config.json"
+            if config_path:
+                #get merged config path
+                config_path = get_resource_path(options.config)
+                config = cls.read_from_file(config_path)
+        except FileNotFoundError:
+            print(f"The file {config_path} does not exist.")
+        except json.JSONDecodeError:
+            print(f"The file {config_path} contains invalid JSON.")
         for key, value in vars(options).items():
             if value is not None and key in cls.__dataclass_fields__:
                 config[key] = value

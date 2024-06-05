@@ -319,7 +319,7 @@ class XiaoMusic:
             sbp_args += ("--proxy", f"{self.proxy}")
 
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args)
-        await self.do_tts(f"正在下载歌曲{search_key}")
+        #await self.do_tts(f"正在下载歌曲{search_key}")
 
     # 本地是否存在歌曲
     def get_filename(self, name):
@@ -528,7 +528,24 @@ class XiaoMusic:
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
         self.set_next_music_timeout()
+        
+     # 下载歌曲
+    async def down(self, **kwargs):
+        parts = kwargs["arg1"].split("|")
+        search_key = parts[0]
+        name = parts[1] if len(parts) > 1 else search_key
+        if name == "":
+            name = search_key
+        self.log.debug("down. search_key:%s name:%s", search_key, name)
+        filename = self.get_filename(name)
 
+        if len(filename) <= 0:
+            await self.download(search_key, name)
+            self.log.info("正在下载中 %s", search_key + ":" + name)
+            await self.download_proc.wait()
+            # 把文件插入到播放列表里
+            self.add_download_music(name)
+        
     # 下一首
     async def play_next(self, **kwargs):
         self.log.info("下一首")
