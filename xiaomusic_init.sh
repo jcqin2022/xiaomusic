@@ -12,25 +12,24 @@ INIT_DIR="/etc/init.d"
 case "$1" in
     start)
         #start xiaomusic
-        pushd $APP_PATH
+        pushd "$APP_PATH"
         nohup "./$APP_BIN" > /dev/null 2>&1 &
         echo -e "`date`:started xiaomusic:8090" >> $LOG_FILE
         popd
         ;;
     stop)
-        pkill -f "$APP_BIN"
+        pkill -f "$APP_BIN$"
         ;;
     restart)
-        pkill -f "$APP_BIN"
+        pkill -f "$APP_BIN$"
         sleep 1
-        pushd $APP_PATH
+        pushd "$APP_PATH"
         nohup "./$APP_BIN" > /dev/null 2>&1 &
         echo -e "`date`:started xiaomusic:8090" >> $LOG_FILE
         popd
         ;;
     status)
-        pgrep -f "$APP_BIN" > /dev/null
-        echo $?
+        pgrep -laf "$APP_BIN$"
         if [ $? -eq 0 ]; then
             echo -e "$APP_BIN is running."
         else
