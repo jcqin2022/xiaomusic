@@ -96,6 +96,7 @@ class Config:
     )  # "bilisearch:" or "ytsearch:"
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
     active_cmd: str = os.getenv("XIAOMUSIC_ACTIVE_CMD", "play,random_play")
+    log_path: str = os.getenv("XIAOMUSIC_LOG_PATH", "./xiaomusic.log")
 
     def __post_init__(self) -> None:
         if self.proxy:

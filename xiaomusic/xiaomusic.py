@@ -81,10 +81,15 @@ class XiaoMusic:
         self._stop_timer = None
 
         # setup logger
+        # support log to target file.
+        fileHandler = logging.FileHandler(config.log_path, encoding='utf-8')
         logging.basicConfig(
             format=f"[{__version__}]\t%(message)s",
             datefmt="[%X]",
-            handlers=[RichHandler(rich_tracebacks=True)]
+            handlers=[
+                RichHandler(rich_tracebacks=True),
+                fileHandler
+            ]
         )
         self.log = logging.getLogger("xiaomusic")
         self.log.setLevel(logging.DEBUG if config.verbose else logging.INFO)
