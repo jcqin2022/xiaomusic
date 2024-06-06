@@ -23,10 +23,14 @@ case "$1" in
     restart)
         pkill -f "$APP_BIN"
         sleep 1
-        $FILEBROWSER_BIN -c $CONFIG_FILE -d $DB_FILE &
+        pushd $APP_PATH
+        nohup "./$APP_BIN" > /dev/null 2>&1 &
+        echo -e "`date`:started xiaomusic:8090" >> $LOG_FILE
+        popd
         ;;
     status)
         pgrep -f "$APP_BIN" > /dev/null
+        echo $?
         if [ $? -eq 0 ]; then
             echo -e "$APP_BIN is running."
         else
