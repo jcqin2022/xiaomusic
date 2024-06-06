@@ -56,6 +56,10 @@ def searchmusic():
 def playingmusic():
     return xiaomusic.playingmusic()
 
+@app.route("/downloadingmusic", methods=["GET"])
+async def downloadingmusic():
+    return await xiaomusic.downloadingmusic()
+
 @app.route("/", methods=["GET"])
 def redirect_to_index():
     return send_from_directory("static", "index.html")

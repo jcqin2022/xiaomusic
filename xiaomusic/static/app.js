@@ -2,7 +2,7 @@ $(function(){
   $container=$("#cmds");
   append_op_button_name("下一首");
   append_op_button_name("全部循环");
-  append_op_button_name("关机");
+  append_op_button_name("停止播放");
   append_op_button_name("单曲循环");
   append_op_button_name("播放歌曲");
   append_op_button_name("随机播放");
@@ -108,9 +108,17 @@ $(function(){
     });
   }
 
+  function get_downloading_music() {
+    $.get("/downloadingmusic", function(data, status) {
+      console.log(data);
+      $("#downloading-music").text(data);
+    });
+  }
+
   // 每3秒获取下正在播放的音乐
   get_playing_music();
   setInterval(() => {
     get_playing_music();
+    get_downloading_music();
   }, 3000);
 });

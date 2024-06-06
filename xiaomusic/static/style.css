@@ -26,7 +26,8 @@ input,select {
 }
 
 .container{
-  width: 280px;
+  width: 300px;
+  word-wrap: normal;
   overflow: hidden;
   display: inline-block;
 }
@@ -48,7 +49,8 @@ input,select {
   }
 }
 .text {
-  white-space: nowrap;
+  white-space:initial;
+  text-wrap:wrap;
   font-weight: bold;
   position: relative;
   animation: text-scroll 10s linear infinite;
