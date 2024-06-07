@@ -55,12 +55,17 @@ input,select {
   position: relative;
   animation: text-scroll 10s linear infinite;
 }
-
 .rows {
   display: flex;
   flex-direction: column;
   margin-left: 20px;
   margin-right: 20px;
+}
+
+.downloader{
+  width: 400px;
+  word-wrap: normal;
+  display: inline-block;
 }
 
 footer {

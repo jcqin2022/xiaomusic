@@ -634,8 +634,16 @@ class XiaoMusic:
     async def downloadingmusic(self):
         download_msg = "无下载"
         if self.is_downloading() and self.download_proc.stdout:
-            data = await self.download_proc.stdout.readline()
-            line = data.decode().strip()
+            try:
+                #stdout, stderr = await self.download_proc.communicate
+                data = await self.download_proc.stdout.readline()
+                line = data.decode().strip()
+                if not line:
+                    line = "无下载"
+            except Exception as e:
+                self.log.debug("downloadingmusic. exception:%s", e)
+                line = "等待中..."
+            #line = data.decode().strip()
             return_code = self.download_proc.returncode
             self.log.debug(f"downloading ({return_code}): {line}")
             download_msg = f"downloading ({return_code}): {line}"
