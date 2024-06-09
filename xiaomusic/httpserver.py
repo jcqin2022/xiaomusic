@@ -47,6 +47,11 @@ def getvolume():
         "volume": volume,
     }
 
+@app.route("/getmusiclist", methods=["GET"])
+def getmusiclist():
+    musics = xiaomusic.get_music_list()
+    return musics
+
 @app.route("/searchmusic", methods=["GET"])
 def searchmusic():
     name = request.args.get('name')

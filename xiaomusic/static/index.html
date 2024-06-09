@@ -10,6 +10,23 @@
   <body>
     <h2>小爱音箱操控面板<span id="version">(版本未知)</span></h2>
     <hr>
+    <div id="titleBar">
+      <p>歌曲列表</p>
+      <button id="refreshButton" title="刷新列表">
+        <img src="./static/refresh.png" alt="刷新图标">
+      </button>
+    </div>
+    <div id="playlistContainer">
+      <ul id="musicList">
+          <!-- 歌曲条目将在这里添加 -->
+      </ul>
+    </div>
+    <div id="statusBar">
+      <div class="container">
+        <div id="playering-music" class="text"></div>
+      </div>
+    </div>
+    <hr>
     <div id="cmds">
     </div>
     <hr>
@@ -31,10 +48,6 @@
     <button id="play">播放</button>
     <button id="search">下载</button>
     <hr>
-    <div class="container">
-      <div id="playering-music" class="text"></div>
-    </div>
-    <br>
     <div class="downloader">
       <div id="downloading-music"> </div>
     </div>

@@ -105,6 +105,7 @@ $(function(){
     $.get("/playingmusic", function(data, status) {
       console.log(data);
       $("#playering-music").text(data);
+      selectCurrentSong(data);
     });
   }
 
@@ -121,4 +122,69 @@ $(function(){
     get_playing_music();
     get_downloading_music();
   }, 3000);
+
+  // create music list
+  $musicList=$("#musicList");
+  var songs = [
+    /* 这里添加歌曲对象，包含歌曲名称、艺术家等信息 */
+  ];
+  
+  function build_music_list(){
+    $.get("/getmusiclist", function(data, status) {
+      console.log(data);
+      songs = JSON.parse(data);
+      renderPlaylist();
+    });
+  }
+  
+  function renderPlaylist() {
+      musicList.innerHTML = '';
+      songs.forEach((song, index) => {
+          let li = document.createElement('li');
+          //li.textContent = `${index + 1}. ${song.name} - ${song.artist}`;
+          li.textContent = `${index + 1}. ${song}`;
+          li.dataset.index = index;
+          li.addEventListener('dblclick', playSong);
+          musicList.appendChild(li);
+      });
+  }
+
+  function playSong(event) {
+      let selectedIndex = event.target.dataset.index;
+      highlightCurrentSong(selectedIndex);
+      //console.log(`Playing song: ${songs[selectedIndex].name}`);
+      let song = songs[selectedIndex];
+      console.log(`Playing song: ${song}`);
+      let cmd = "播放歌曲"+song+"|"+song;
+      sendcmd(cmd);
+  }
+
+  function highlightCurrentSong(index) {
+      let currentPlaying = document.querySelector('.playing');
+      if (currentPlaying) {
+          currentPlaying.classList.remove('playing');
+      }
+      musicList.children[index].classList.add('playing');
+  }
+
+  function selectCurrentSong(song) {
+    const musicListItems = Array.from(document.querySelectorAll('#musicList li'));
+    const itemTexts = musicListItems.map(item => item.textContent);
+    const targetText = song;
+    const index = itemTexts.findIndex(item => {
+      return item.includes(targetText);
+    });
+
+    if (index !== -1) {
+      highlightCurrentSong(index);
+    } else {
+      console.log(`文本 '${targetText}' 不在 musicList`);
+    }
+  }
+
+  $("#refreshButton").on("click", () => {
+    build_music_list();
+  });
+
+  build_music_list();
 });

@@ -326,7 +326,7 @@ class XiaoMusic:
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args,
                                                                   stdout=asyncio.subprocess.PIPE,
                                                                   stderr=asyncio.subprocess.PIPE)
-        #await self.do_tts(f"正在下载歌曲{search_key}")
+        await self.do_tts(f"正在下载歌曲{search_key}")
 
     # 本地是否存在歌曲
     def get_filename(self, name):
@@ -649,6 +649,10 @@ class XiaoMusic:
             download_msg = f"downloading ({return_code}): {line}"
         return download_msg
     
+    def get_music_list(self):
+        json_str = json.dumps(self._play_list)
+        return json_str
+
     # 获取当前配置
     def getconfig(self):
         return self.config

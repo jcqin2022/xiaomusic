@@ -42,10 +42,10 @@ input,select {
     left: 0%;
   }
   75% {
-    left: -50%;
+    left: 50%;
   }
   100% {
-    left: -100%;
+    left: 100%;
   }
 }
 .text {
@@ -69,9 +69,82 @@ input,select {
 }
 
 footer {
-  position: fixed;
   bottom: 0;
   width: 100%;
   text-align: center;
   padding: 10px 0;
+}
+
+/* styles.css */
+#playlistContainer {
+  width: 300px;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+#musicList {
+  list-style-type: none;
+  padding: 0;
+  height: 200px;
+  overflow-y: auto;
+}
+
+#musicList li {
+  padding: 10px;
+  cursor: pointer;
+  font-size: small;
+}
+
+#musicList .playing {
+  background-color: #cce8df;
+  animation: scrollHighlight 5s linear infinite;
+}
+
+@keyframes scrollHighlight {
+  0% { background-position: left; }
+  100% { background-position: right; }
+}
+
+#titleBar {
+  background-color: #333;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-left: 10px;
+  margin-right: 10px;
+  width: 300px;
+  height: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+#refreshButton {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  width: 40px;
+  height: 30px;
+}
+#refreshButton img {
+  width: 100%;
+  height: 100%;
+}
+#statusBar {
+  background-color: #333;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-left: 10px;
+  margin-right: 10px;
+  width: 300px;
+  height: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 }
