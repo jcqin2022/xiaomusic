@@ -177,6 +177,7 @@ $(function(){
 
     if (index !== -1) {
       highlightCurrentSong(index);
+      musicListItems[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
       console.log(`文本 '${targetText}' 不在 musicList`);
     }
