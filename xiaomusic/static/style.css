@@ -80,7 +80,8 @@ footer {
   width: 300px;
   margin-left: 10px;
   margin-right: 10px;
-  padding: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
   border: 1px solid #ddd;
   border-radius: 5px;
   background-color: #f9f9f9;
@@ -88,15 +89,27 @@ footer {
 
 #musicList {
   list-style-type: none;
-  padding: 0;
-  height: 200px;
+  padding: 0px;
+  max-height: 260px;
+  height: 260px;
   overflow-y: auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 #musicList li {
   padding: 10px;
   cursor: pointer;
-  font-size: small;
+  font-size:large;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#musicList li:hover {
+  background-color: #f2f2f2; /* 高亮背景色 */
+  color: #333; /* 高亮文字颜色 */
+  transform: scale(1.02); /* 缩放效果 */
+  transition: transform 0.3s ease-in-out; /* 缩放过渡效果 */
 }
 
 #musicList .playing {

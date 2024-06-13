@@ -10,7 +10,7 @@ import urllib.parse
 import traceback
 import mutagen
 import queue
-from xiaomusic.httpserver import StartHTTPServer
+from xiaomusic.httpserver import StartHTTPServer, emit_message
 
 from pathlib import Path
 
@@ -326,6 +326,7 @@ class XiaoMusic:
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args,
                                                                   stdout=asyncio.subprocess.PIPE,
                                                                   stderr=asyncio.subprocess.PIPE)
+        emit_message("downloading", {"song":search_key})
         await self.do_tts(f"正在下载歌曲{search_key}")
 
     # 本地是否存在歌曲
@@ -530,11 +531,15 @@ class XiaoMusic:
         self.log.info("cur_music %s", self.cur_music)
         url = self.get_file_url(name)
         self.log.info("播放 %s", url)
-        await self.force_stop_xiaoai()
-        await self.mina_service.play_by_url(self.device_id, url)
+        await self.do_play(url)
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
         self.set_next_music_timeout()
+        
+    async def do_play(self, url):
+        await self.force_stop_xiaoai()
+        await self.mina_service.play_by_url(self.device_id, url)
+        emit_message("playing", {"song":self.cur_music})
         
      # 下载歌曲
     async def down(self, **kwargs):

@@ -103,9 +103,12 @@ $(function(){
 
   function get_playing_music() {
     $.get("/playingmusic", function(data, status) {
-      console.log(data);
-      $("#playering-music").text(data);
-      selectCurrentSong(data);
+      var song = data;
+      if(song === '')
+        song = "当前无播放";
+      console.log(song);
+      $("#playering-music").text(song);
+      selectCurrentSong(song);
     });
   }
 
@@ -118,10 +121,11 @@ $(function(){
 
   // 每3秒获取下正在播放的音乐
   get_playing_music();
-  setInterval(() => {
+  get_downloading_music();
+  /* setInterval(() => {
     get_playing_music();
     get_downloading_music();
-  }, 3000);
+  }, 3000); */
 
   // create music list
   $musicList=$("#musicList");
@@ -133,6 +137,8 @@ $(function(){
     $.get("/getmusiclist", function(data, status) {
       console.log(data);
       songs = JSON.parse(data);
+      // [test] fake data
+      //songs = Array.from({length:100}, (_, index)=>`song ${index +1}`)
       renderPlaylist();
     });
   }
@@ -152,7 +158,6 @@ $(function(){
   function playSong(event) {
       let selectedIndex = event.target.dataset.index;
       highlightCurrentSong(selectedIndex);
-      //console.log(`Playing song: ${songs[selectedIndex].name}`);
       let song = songs[selectedIndex];
       console.log(`Playing song: ${song}`);
       let cmd = "播放歌曲"+song+"|"+song;
@@ -164,7 +169,9 @@ $(function(){
       if (currentPlaying) {
           currentPlaying.classList.remove('playing');
       }
-      musicList.children[index].classList.add('playing');
+      var cur = musicList.children[index];
+      cur.classList.add('playing');
+      scrollToChild(musicList, cur);
   }
 
   function selectCurrentSong(song) {
@@ -174,13 +181,16 @@ $(function(){
     const index = itemTexts.findIndex(item => {
       return item.includes(targetText);
     });
-
     if (index !== -1) {
       highlightCurrentSong(index);
-      musicListItems[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
       console.log(`文本 '${targetText}' 不在 musicList`);
     }
+  }
+
+  function scrollToChild(parent, child) {
+    const offsetTop = child.offsetTop - parent.offsetTop;
+    parent.scrollTop = offsetTop;
   }
 
   $("#refreshButton").on("click", () => {
@@ -188,4 +198,49 @@ $(function(){
   });
 
   build_music_list();
+
+  // update websocket io
+  /* const socket = io("ws://localhost:8090/", {
+    reconnectionDelayMax: 10000,
+    query: {
+      "my-key": "my-value"
+    }
+  }); */
+  socket = io.connect();
+  socket.on('connect', function() {
+      console.log('Connected to WebSocket server');
+  });
+
+  socket.on('disconnect', function() {
+      console.log('Disconnected from WebSocket server');
+  });
+
+  socket.on('response', function(data) {
+      $('#messages').append('<p>' + data.data + '</p>');
+  });
+
+  socket.on('playing', function(data) {
+    console.log('playing:' +  data.song);
+    get_playing_music();
+  });
+
+  socket.on('downloading', function(data) {
+    console.log('downloading:' +  data.song);
+    get_downloading_music();
+  });
+
+  // 发送消息到后端
+  function sendMessage(data) {
+    console.log("Connected: " + socket.connected);
+    socket.timeout(3000).emit('message', data, (err, res)=>{
+      if(err)
+        console.log("sendMessage failed: "  + err);
+      else
+        console.log("response: " + res);
+    });
+  }
+
+  $("#status").on("click", () => {
+    sendMessage("test");
+  });
 });

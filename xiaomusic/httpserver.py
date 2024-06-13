@@ -4,7 +4,8 @@ import sys
 import traceback
 import asyncio
 
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, current_app
+from flask_socketio import SocketIO, emit
 from waitress import serve
 from threading import Thread
 
@@ -27,6 +28,8 @@ port = 8090
 static_path = "music"
 xiaomusic = None
 log = None
+socketio = SocketIO(app)
+clients_sid = {}
 
 
 @app.route("/allcmds")
@@ -104,6 +107,28 @@ async def savesetting():
     await xiaomusic.saveconfig(data)
     return "save success"
 
+# Support socket IO
+@socketio.on('connect')
+def handle_connect():
+    clients_sid[request.sid] = request.sid
+    log.debug(f'Client connected: {request.sid}')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    del clients_sid[request.sid]
+    log.debug(f'Client disconnected: {request.sid}')
+
+@socketio.on('message')
+def handle_message(data):
+    log.debug(f'Received message: {data}')
+    #if(callback):
+    #    callback({"data":"playing"})
+    return data
+    
+def emit_message(message, data):
+    with app.app_context():
+        socketio.emit(message, data)
+
 def static_path_handler(filename):
     log.debug(filename)
     log.debug(static_path)
@@ -112,7 +137,8 @@ def static_path_handler(filename):
     return send_from_directory(absolute_path, filename)
 
 def run_app():
-    serve(app, host=host, port=port)
+    #serve(app, host=host, port=port)
+    socketio.run(app, host=host, port=port)
 
 def StartHTTPServer(_port, _static_path, _xiaomusic):
     global port, static_path, xiaomusic, log
