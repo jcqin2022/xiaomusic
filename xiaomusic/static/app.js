@@ -122,10 +122,10 @@ $(function(){
   // 每3秒获取下正在播放的音乐
   get_playing_music();
   get_downloading_music();
-  /* setInterval(() => {
-    get_playing_music();
-    get_downloading_music();
-  }, 3000); */
+  setInterval(() => {
+    //get_playing_music();
+    //get_downloading_music();
+  }, 3000);
 
   // create music list
   $musicList=$("#musicList");

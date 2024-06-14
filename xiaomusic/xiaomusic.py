@@ -110,16 +110,14 @@ class XiaoMusic:
         async with ClientSession() as session:
             session._cookie_jar = self.cookie_jar
             while True:
-                self.log.debug(
-                    "Listening new message, timestamp: %s", self.last_timestamp
-                )
+                #self.log.debug("Listening new message, timestamp: %s", self.last_timestamp)
                 await self.get_latest_ask_from_xiaoai(session)
                 start = time.perf_counter()
-                self.log.debug("Polling_event, timestamp: %s", self.last_timestamp)
+                #self.log.debug("Polling_event, timestamp: %s", self.last_timestamp)
                 await self.polling_event.wait()
                 if (d := time.perf_counter() - start) < 1:
                     # sleep to avoid too many request
-                    self.log.debug("Sleep %f, timestamp: %s", d, self.last_timestamp)
+                    #self.log.debug("Sleep %f, timestamp: %s", d, self.last_timestamp)
                     await asyncio.sleep(1 - d)
 
     async def init_all_data(self, session):
@@ -542,6 +540,7 @@ class XiaoMusic:
         emit_message("playing", {"song":self.cur_music})
         
      # 下载歌曲
+    
     async def down(self, **kwargs):
         parts = kwargs["arg1"].split("|")
         search_key = parts[0]
@@ -636,24 +635,35 @@ class XiaoMusic:
         return self.cur_music
     
     # 正在downloading中的音乐
-    async def downloadingmusic(self):
+    async def downloadingmusic(self, **kwargs):
         download_msg = "无下载"
         if self.is_downloading() and self.download_proc.stdout:
             try:
                 #stdout, stderr = await self.download_proc.communicate
                 data = await self.download_proc.stdout.readline()
                 line = data.decode().strip()
+                emit_message("downloading", line)
                 if not line:
                     line = "无下载"
             except Exception as e:
                 self.log.debug("downloadingmusic. exception:%s", e)
                 line = "等待中..."
-            #line = data.decode().strip()
-            return_code = self.download_proc.returncode
-            self.log.debug(f"downloading ({return_code}): {line}")
-            download_msg = f"downloading ({return_code}): {line}"
+            self.log.debug(f"downloading: {line}")
+            download_msg = f"downloading: {line}"
         return download_msg
     
+    async def poll_download_status(self):
+        while True:
+            #self.log.debug("Listening new message, timestamp: %s", self.last_timestamp)
+            await self.downloadingmusic()
+            start = time.perf_counter()
+            #self.log.debug("Polling_event, timestamp: %s", self.last_timestamp)
+            await self.polling_event.wait()
+            if (d := time.perf_counter() - start) < 1:
+                # sleep to avoid too many request
+                #self.log.debug("Sleep %f, timestamp: %s", d, self.last_timestamp)
+                await asyncio.sleep(1 - d)
+                    
     def get_music_list(self):
         json_str = json.dumps(self._play_list)
         return json_str
