@@ -55,6 +55,7 @@ class XiaoMusic:
         self.miio_service = None
         self.polling_event = asyncio.Event()
         self.new_record_event = asyncio.Event()
+        self.downloading_task = None
         self.queue = queue.Queue()
 
         self.music_path = config.music_path
@@ -324,7 +325,9 @@ class XiaoMusic:
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args,
                                                                   stdout=asyncio.subprocess.PIPE,
                                                                   stderr=asyncio.subprocess.PIPE)
-        emit_message("downloading", {"song":search_key})
+        emit_message("downloading", search_key)
+        # Start polling download output
+        self.downloading_task = asyncio.create_task(self.poll_download_status())
         await self.do_tts(f"正在下载歌曲{search_key}")
 
     # 本地是否存在歌曲
@@ -644,25 +647,26 @@ class XiaoMusic:
                 line = data.decode().strip()
                 emit_message("downloading", line)
                 if not line:
-                    line = "无下载"
+                    line = ""
             except Exception as e:
                 self.log.debug("downloadingmusic. exception:%s", e)
                 line = "等待中..."
             self.log.debug(f"downloading: {line}")
-            download_msg = f"downloading: {line}"
+            download_msg = line
         return download_msg
     
     async def poll_download_status(self):
+        self.log.debug(f"poll download status now.")
         while True:
             #self.log.debug("Listening new message, timestamp: %s", self.last_timestamp)
-            await self.downloadingmusic()
-            start = time.perf_counter()
-            #self.log.debug("Polling_event, timestamp: %s", self.last_timestamp)
-            await self.polling_event.wait()
-            if (d := time.perf_counter() - start) < 1:
-                # sleep to avoid too many request
-                #self.log.debug("Sleep %f, timestamp: %s", d, self.last_timestamp)
-                await asyncio.sleep(1 - d)
+            msg = await self.downloadingmusic()
+            if(msg):
+                emit_message("downloading", msg)
+            else:
+                emit_message("downloading", "下载结束")
+                self.log.debug(f"downloading: 下载结束")
+                break
+            
                     
     def get_music_list(self):
         json_str = json.dumps(self._play_list)

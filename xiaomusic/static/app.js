@@ -225,8 +225,8 @@ $(function(){
   });
 
   socket.on('downloading', function(data) {
-    console.log('downloading:' +  data.song);
-    get_downloading_music();
+    console.log('downloading:' +  data);
+    addDataToList("downloading", data);
   });
 
   // 发送消息到后端
@@ -243,4 +243,30 @@ $(function(){
   $("#status").on("click", () => {
     sendMessage("test");
   });
+
+  // 切换列表的可见性
+  $("#toggle-log").on("click", () => {
+    var listContainer = document.querySelector('.hidden-list-container');
+    if (listContainer.style.display === 'none') {
+      listContainer.style.display = 'block';
+    } else {
+      listContainer.style.display = 'none';
+    }
+  });
+
+  // 添加数据到列表的函数
+  function addDataToList(data1, data2) {
+    var listContainer = document.querySelector('.hidden-list');
+    var newListItem = document.createElement('li');
+    var dataSpan1 = document.createElement('span');
+    var dataSpan2 = document.createElement('span');
+    dataSpan1.textContent = data1;
+    dataSpan2.textContent = data2;
+    newListItem.appendChild(dataSpan1);
+    newListItem.appendChild(dataSpan2);
+    if(listContainer.children.length > 1)
+      listContainer.insertBefore(newListItem, listContainer.children[1]);
+    else
+      listContainer.appendChild(newListItem);
+  }
 });
