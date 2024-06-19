@@ -139,7 +139,7 @@ def static_path_handler(filename):
 
 def run_app():
     #serve(app, host=host, port=port)
-    socketio.run(app, host=host, port=port)
+    socketio.run(app, host=host, port=port, debug=True)
 
 def StartHTTPServer(_port, _static_path, _xiaomusic):
     global port, static_path, xiaomusic, log
