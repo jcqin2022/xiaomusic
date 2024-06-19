@@ -23,6 +23,7 @@ from xiaomusic import (
 #cli.show_server_banner = lambda *_: None
 
 app = Flask(__name__)
+app.config['ENV'] = 'development'
 host = "0.0.0.0"
 port = 8090
 static_path = "music"
