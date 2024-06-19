@@ -23,7 +23,6 @@ from xiaomusic import (
 #cli.show_server_banner = lambda *_: None
 
 app = Flask(__name__)
-app.config['ENV'] = 'development'
 host = "0.0.0.0"
 port = 8090
 static_path = "music"
@@ -139,7 +138,7 @@ def static_path_handler(filename):
 
 def run_app():
     #serve(app, host=host, port=port)
-    socketio.run(app, host=host, port=port, debug=True)
+    socketio.run(app, host=host, port=port, allow_unsafe_werkzeug=True)
 
 def StartHTTPServer(_port, _static_path, _xiaomusic):
     global port, static_path, xiaomusic, log
