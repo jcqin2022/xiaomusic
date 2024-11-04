@@ -26,7 +26,7 @@
 
 ### BEGIN INFO
 # Old: support Samsung Note3, Azure VM, VMWare VM.
-# 11/04/2024: support ubuntu 20.04 with steps (install, src, env, build, run)
+# 11/04/2024: support ubuntu 20.04 with steps (install, src, env, build, run). Note: before debuging, web login is necessary.
 ### END INFO
 
 #APP
