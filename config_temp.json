@@ -1,0 +1,15 @@
+{   
+    "account": "",
+    "active_cmd": "play,random_play",
+    "cookie":"",
+    "ffmpeg_location":"./ffmpeg/bin",
+    "hardware":"S12",
+    "hostname": "192.168.6.101",
+    "mi_did": "77999771",
+    "music_path": "./music",
+    "mute_xiaoai": "True",
+    "password": "",
+    "port":8090,
+    "search_prefix": "ytsearch:",
+    "verbose": "True"
+}
