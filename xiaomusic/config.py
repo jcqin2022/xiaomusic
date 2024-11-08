@@ -36,20 +36,6 @@ HARDWARE_COMMAND_DICT = {
 
 DEFAULT_COMMAND = ("5-1", "5-5", "2-1")
 
-KEY_WORD_DICT = {
-    "播放歌曲": "play",
-    "放歌曲": "play",
-    "下载歌曲": "down",
-    "下一首": "play_next",
-    "单曲循环": "set_play_type_one",
-    "全部循环": "set_play_type_all",
-    "随机播放": "random_play",
-    "关机": "stop",
-    "停止播放": "stop",
-    "分钟后关机": "stop_after_minute",
-    "set_volume#": "set_volume",
-    "get_volume#": "get_volume",
-}
 # 默认口令
 def default_key_word_dict():
     return {
@@ -83,21 +69,37 @@ KEY_WORD_ARG_BEFORE_DICT = {
     "分钟后关机": True,
 }
 
-# 匹配优先级
-KEY_MATCH_ORDER = [
-    "set_volume#",
-    "get_volume#",
+KEY_WORD_DICT = {
     "分钟后关机",
     "播放歌曲",
-    "放歌曲",
-    "下载歌曲",
     "下一首",
+    "上一首",
     "单曲循环",
     "全部循环",
     "随机播放",
     "关机",
-    "停止播放",
-]
+    "刷新列表",
+    "播放列表第",
+    "播放列表",
+    "加入收藏",
+    "收藏歌曲",
+    "取消收藏",
+}
+# 匹配优先级
+# KEY_MATCH_ORDER = [
+#     "set_volume#",
+#     "get_volume#",
+#     "分钟后关机",
+#     "播放歌曲",
+#     "放歌曲",
+#     "下载歌曲",
+#     "下一首",
+#     "单曲循环",
+#     "全部循环",
+#     "随机播放",
+#     "关机",
+#     "停止播放",
+# ]
 
 # 命令参数在前面
 KEY_WORD_ARG_BEFORE_DICT = {

@@ -22,9 +22,6 @@ from collections.abc import AsyncIterator
 from dataclasses import asdict, dataclass
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
-from typing import AsyncIterator
-import socket
-import difflib
 
 import aiohttp
 import mutagen

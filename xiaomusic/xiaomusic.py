@@ -15,7 +15,7 @@ from logging.handlers import RotatingFileHandler
 import traceback
 import mutagen
 import queue
-from xiaomusic.httpserver import StartHTTPServer, emit_message
+#from xiaomusic.httpserver import StartHTTPServer, emit_message
 
 from pathlib import Path
 
@@ -29,8 +29,6 @@ from xiaomusic import __version__
 from xiaomusic.config import (
     COOKIE_TEMPLATE,
     LATEST_ASK_API,
-    KEY_WORD_DICT,
-    KEY_MATCH_ORDER,
     SUPPORT_MUSIC_TYPE,
     KEY_WORD_ARG_BEFORE_DICT,
     Config,
@@ -115,7 +113,7 @@ class XiaoMusic:
         self.update_devices()
 
         # 启动统计
-        self.analytics = Analytics(self.log)
+        #self.analytics = Analytics(self.log)
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
@@ -123,8 +121,8 @@ class XiaoMusic:
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
 
-	# OLD
-	self.device_id = ""
+	    # [alic] OLD
+        self.device_id = ""
         self.downloading_task = None
         self.queue = queue.Queue()
         self.music_path = config.music_path
@@ -150,23 +148,8 @@ class XiaoMusic:
         # 关机定时器
         self._stop_timer = None
 
-        # setup logger
-        # support log to target file.
-        fileHandler = logging.FileHandler(config.log_path, encoding='utf-8')
-        logging.basicConfig(
-            format=f"[{__version__}]\t%(message)s",
-            datefmt="[%X]",
-            handlers=[
-                RichHandler(rich_tracebacks=True),
-                fileHandler
-            ]
-        )
-        self.log = logging.getLogger("xiaomusic")
-        self.log.setLevel(logging.DEBUG if config.verbose else logging.INFO)
-        self.log.debug(config)
-
         # 启动时初始化获取声音
-        self.set_last_record("get_volume#")
+        #self.set_last_record("get_volume#")
 
         self.log.debug("ffmpeg_location: %s", self.ffmpeg_location)
 
@@ -218,8 +201,9 @@ class XiaoMusic:
 
         log_file = self.config.log_file
         log_path = os.path.dirname(log_file)
-        if not os.path.exists(log_path):
-            os.makedirs(log_path)
+        # [alic] generate log with executable file.
+        # if not os.path.exists(log_path):
+        #     os.makedirs(log_path)
         if os.path.exists(log_file):
             os.remove(log_file)
         handler = RotatingFileHandler(
@@ -310,6 +294,8 @@ class XiaoMusic:
                     devices[did] = device
             self.config.devices = devices
             self.log.info(f"选中的设备: {devices}")
+            # [alic] update devices list here once get devices online
+            self.update_devices()
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -765,19 +751,21 @@ class XiaoMusic:
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
-    async def analytics_task_daily(self):
-        while True:
-            await self.analytics.send_daily_event()
-            await asyncio.sleep(3600)
+    # [alic] remove analytics of google.
+    # async def analytics_task_daily(self):
+    #     while True:
+    #         await self.analytics.send_daily_event()
+    #         await asyncio.sleep(3600)
 
     async def run_forever(self):
         self.try_gen_all_music_tag()  # 事件循环开始后调用一次
         self.crontab.start()
-        await self.analytics.send_startup_event()
-        analytics_task = asyncio.create_task(self.analytics_task_daily())
-        assert (
-            analytics_task is not None
-        )  # to keep the reference to task, do not remove this
+        # [alic] remove analytics of google.
+        # await self.analytics.send_startup_event()
+        # analytics_task = asyncio.create_task(self.analytics_task_daily())
+        # assert (
+        #     analytics_task is not None
+        # )  # to keep the reference to task, do not remove this
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)

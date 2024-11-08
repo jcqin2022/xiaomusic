@@ -187,28 +187,7 @@ def static_path_handler(filename):
     log.debug(absolute_path)
     return send_from_directory(absolute_path, filename)
 
-def run_app():
-    #serve(app, host=host, port=port)
-    socketio.run(app, host=host, port=port, allow_unsafe_werkzeug=True)
-
-def StartHTTPServer(_port, _static_path, _xiaomusic):
-    global port, static_path, xiaomusic, log
-    port = _port
-    static_path = _static_path
-    xiaomusic = _xiaomusic
-    log = xiaomusic.log
-
-    app.add_url_rule(
-        f"/{static_path}/<path:filename>", "static_path_handler", static_path_handler
-    )
-
-    server_thread = Thread(target=run_app)
-    server_thread.daemon = True
-    server_thread.start()
-    xiaomusic.log.info(f"Serving on {host}:{port}")
-
-# New server
-
+# [alic] New server: Uvicorn(ASGI server) + FastAPI(Web framework)
 @asynccontextmanager
 async def app_lifespan(app):
     if xiaomusic is not None:
