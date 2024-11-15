@@ -12,24 +12,16 @@ import urllib.parse
 from collections import OrderedDict
 from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
-import traceback
-import mutagen
-import queue
-#from xiaomusic.httpserver import StartHTTPServer, emit_message
-
+# [alic] support websocket IO.
+from xiaomusic.socket import emit_message
 from pathlib import Path
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService, miio_command
-from rich import print
-from rich.logging import RichHandler
 
 from xiaomusic import __version__
 #from xiaomusic.analytics import Analytics
 from xiaomusic.config import (
-    COOKIE_TEMPLATE,
-    LATEST_ASK_API,
-    SUPPORT_MUSIC_TYPE,
     KEY_WORD_ARG_BEFORE_DICT,
     Config,
     Device,
@@ -62,12 +54,6 @@ from xiaomusic.utils import (
     traverse_music_directory,
     try_add_access_control_param,
 )
-
-#OLD
-EOF = object()
-
-PLAY_TYPE_ONE = 0  # 单曲循环
-PLAY_TYPE_ALL = 1  # 全部循环
 
 class XiaoMusic:
     def __init__(self, config: Config):
@@ -120,38 +106,6 @@ class XiaoMusic:
 
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
-
-	    # [alic] OLD
-        self.device_id = ""
-        self.downloading_task = None
-        self.queue = queue.Queue()
-        self.music_path = config.music_path
-        self.hostname = config.hostname
-        self.port = config.port
-        self.proxy = config.proxy
-        self.search_prefix = config.search_prefix
-        self.ffmpeg_location = config.ffmpeg_location
-        self.active_cmd = config.active_cmd.split(",")
-
-        # 下载对象
-        self.download_proc = None
-        # 单曲循环，全部循环
-        self.play_type = PLAY_TYPE_ALL
-        self.cur_music = ""
-        self._next_timer = None
-        self._timeout = 0
-        self._volume = 0
-        self._all_music = {}
-        self._play_list = []
-        self._playing = False
-
-        # 关机定时器
-        self._stop_timer = None
-
-        # 启动时初始化获取声音
-        #self.set_last_record("get_volume#")
-
-        self.log.debug("ffmpeg_location: %s", self.ffmpeg_location)
 
     def init_config(self):
         self.music_path = self.config.music_path
@@ -218,6 +172,7 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
+                # [alic] disable frequent debug message.
                 #self.log.debug(
                 #    f"Listening new message, timestamp: {self.last_timestamp}"
                 #)
@@ -410,7 +365,7 @@ class XiaoMusic:
 
     def _get_last_query(self, device_id, data):
         did = self.get_did(device_id)
-        self.log.debug(f"_get_last_query device_id:{device_id} did:{did} data:{data}")
+        # self.log.debug(f"_get_last_query device_id:{device_id} did:{did} data:{data}")
         if d := data.get("data"):
             records = json.loads(d).get("records")
             if not records:
@@ -427,7 +382,7 @@ class XiaoMusic:
         did = last_record["did"]
         timestamp = last_record.get("time")
         query = last_record.get("query", "").strip()
-        self.log.debug(f"获取到最后一条对话记录：{query} {timestamp}")
+        # self.log.debug(f"获取到最后一条对话记录：{query} {timestamp}")
 
         if timestamp > self.last_timestamp[did]:
             self.last_timestamp[did] = timestamp
@@ -1444,7 +1399,9 @@ class XiaoMusicDevice:
             return
 
         self.log.info(f"【{name}】已经开始播放了")
-        await self.xiaomusic.analytics.send_play_event(name, sec)
+        # [alic] remove analytics of google and reminder frontend.
+        # await self.xiaomusic.analytics.send_play_event(name, sec)
+        await emit_message("playing", {"song": name})
 
         # 设置下一首歌曲的播放定时器
         if sec <= 1:
@@ -1645,15 +1602,16 @@ class XiaoMusicDevice:
         try:
             if not self.config.miio_tts_command:
                 self.log.debug("Call MiNAService tts.")
-                await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
+                # [alic-test]
+                # await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
             else:
                 self.log.debug("Call MiIOService tts.")
                 value = value.replace(" ", ",")  # 不能有空格
-                await miio_command(
-                    self.xiaomusic.miio_service,
-                    self.did,
-                    f"{self.config.miio_tts_command} {value}",
-                )
+                # await miio_command(
+                #     self.xiaomusic.miio_service,
+                #     self.did,
+                #     f"{self.config.miio_tts_command} {value}",
+                # )
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -1672,24 +1630,26 @@ class XiaoMusicDevice:
         try:
             audio_id = await self._get_audio_id(name)
             if self.config.continue_play:
-                ret = await self.xiaomusic.mina_service.play_by_music_url(
-                    device_id, url, _type=1, audio_id=audio_id
-                )
+                # [alic-test]
+                # ret = await self.xiaomusic.mina_service.play_by_music_url(
+                #     device_id, url, _type=1, audio_id=audio_id
+                # )
                 self.log.info(
                     f"play_one_url continue_play device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             elif self.config.use_music_api:
-                ret = await self.xiaomusic.mina_service.play_by_music_url(
-                    device_id, url, audio_id=audio_id
-                )
+                # ret = await self.xiaomusic.mina_service.play_by_music_url(
+                #     device_id, url, audio_id=audio_id
+                # )
                 self.log.info(
                     f"play_one_url play_by_music_url device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             else:
-                ret = await self.xiaomusic.mina_service.play_by_url(device_id, url)
+                # ret = await self.xiaomusic.mina_service.play_by_url(device_id, url)
                 self.log.info(
                     f"play_one_url play_by_url device_id:{device_id} ret:{ret} url:{url}"
                 )
+                ret = 0
         except Exception as e:
             self.log.exception(f"Execption {e}")
         return ret
@@ -1859,7 +1819,7 @@ class XiaoMusicDevice:
             val = d.pop(key)
             val.cancel_all_timer()
 
-#OLD
+# [alic] OLD
     # 手动发消息
     def set_last_record(self, query):
         self.last_record = {
@@ -1868,23 +1828,6 @@ class XiaoMusicDevice:
         }
         self.new_record_event.set()
 
-    async def do_set_volume(self, value):
-        value = int(value)
-        self._volume = value
-        self.log.info(f"声音设置为{value}")
-        if not self.config.use_command:
-            try:
-                self.log.debug("do_set_volume not use_command value:%d", value)
-                await self.mina_service.player_set_volume(self.device_id, value)
-            except Exception:
-                pass
-        else:
-            self.log.debug("do_set_volume use_command value:%d", value)
-            await miio_command(
-                self.miio_service,
-                self.config.mi_did,
-                f"{self.config.volume_command}=#{value}",
-            )
 
     # 获取歌曲播放地址
     def get_file_url(self, name):
@@ -1892,64 +1835,20 @@ class XiaoMusicDevice:
         self.log.debug("get_file_url. name:%s, filename:%s", name, filename)
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.port}/{encoded_name}"
-
-    # 递归获取目录下所有歌曲,生成随机播放列表
-    def gen_all_music_list(self):
-        self._all_music = {}
-        for root, dirs, filenames in os.walk(self.music_path):
-            for filename in filenames:
-                self.log.debug("gen_all_music_list. filename:%s", filename)
-                # 过滤隐藏文件
-                if filename.startswith("."):
-                    continue
-                # 过滤非音乐文件
-                (name, extension) = os.path.splitext(filename)
-                self.log.debug(
-                    "gen_all_music_list. filename:%s, name:%s, extension:%s",
-                    filename,
-                    name,
-                    extension,
-                )
-                if extension not in SUPPORT_MUSIC_TYPE:
-                    continue
-
-                # 歌曲名字相同会覆盖
-                self._all_music[name] = os.path.join(root, filename)
-        self._play_list = list(self._all_music.keys())
-        random.shuffle(self._play_list)
-        self.log.debug(self._all_music)
-
-    # 获取文件播放时长
-    def get_file_duration(self, filename):
-        # 获取音频文件对象
-        audio = mutagen.File(filename)
-        # 获取播放时长
-        duration = audio.info.length
-        return duration
         
      # 下载歌曲
-    async def down(self, **kwargs):
-        parts = kwargs["arg1"].split("|")
-        search_key = parts[0]
-        name = parts[1] if len(parts) > 1 else search_key
+    async def download_with_output(self, search_key, name):
         if name == "":
             name = search_key
-        self.log.debug("down. search_key:%s name:%s", search_key, name)
-        filename = self.get_filename(name)
-
-        if len(filename) <= 0:
+        self.log.info("download with output: search_key:%s name:%s", search_key, name)
+        if not self.xiaomusic.is_music_exist(name):
             await self.download(search_key, name)
             self.log.info("正在下载中 %s", search_key + ":" + name)
-            await self.download_proc.wait()
+            await self._download_proc.wait()
             # 把文件插入到播放列表里
             self.add_download_music(name)
-
-
-    # 搜索音乐
-    def searchmusic(self, name):
-        search_list = fuzzyfinder(name, self._play_list)
-        self.log.debug("searchmusic. name:%s search_list:%s", name, search_list)
-        return search_list
+        else:
+            self.log.info("歌曲已经存在 %s", name)
     
     # 正在downloading中的音乐
     async def downloadingmusic(self, **kwargs):
@@ -1980,23 +1879,3 @@ class XiaoMusicDevice:
                 emit_message("downloading", "下载结束")
                 self.log.debug(f"downloading: 下载结束")
                 break
-            
-                    
-    def get_music_list(self):
-        json_str = json.dumps(self._play_list)
-        return json_str
-
-    # 用于在web线程里调用
-    # 获取所有设备
-    async def call_main_thread_function(self, func, arg1=None):
-        loop = asyncio.get_event_loop()
-        future = loop.create_future()
-        def callback(ret):
-            nonlocal future
-            loop.call_soon_threadsafe(future.set_result, ret)
-        self.queue.put((func, callback, arg1))
-        self.last_record = None
-        self.new_record_event.set()
-        result = await future
-        return result
-

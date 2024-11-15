@@ -1,4 +1,9 @@
 $(function(){
+  // global variable
+  var g_did = "";
+  var g_songs = {};
+  // end
+
   $container=$("#cmds");
   append_op_button_name("下一首");
   append_op_button_name("全部循环");
@@ -8,24 +13,148 @@ $(function(){
   append_op_button_name("随机播放");
 
   $container.append($("<hr>"));
-
   append_op_button_name("10分钟后关机");
   append_op_button_name("30分钟后关机");
   append_op_button_name("60分钟后关机");
 
-  // 拉取声音
-  sendcmd("get_volume#");
-  $.get("/getvolume", function(data, status) {
-    console.log(data, status, data["volume"]);
-    $("#volume").val(data.volume);
+  // pull setting and init device
+  $.get("/getsetting", function(data, status) {
+    console.log(data, status);
+    init_device(data);
+  });
+  // create music list
+  $musicList=$("#musicList");
+  build_music_list();
+
+  // == websocket io
+  socket = io({
+    path: '/ws',
+  });
+  socket.connect();
+  socket.on('connect', function() {
+      console.log('Connected to WebSocket server');
   });
 
-  // 拉取版本
-  $.get("/getversion", function(data, status) {
-    console.log(data, status, data["version"]);
-    $("#version").text(`(${data.version})`);
+  socket.on('disconnect', function() {
+      console.log('Disconnected from WebSocket server');
   });
 
+  socket.on('response', function(data) {
+      $('#messages').append('<p>' + data.data + '</p>');
+  });
+
+  socket.on('playing', function(data) {
+    console.log('playing:' +  data.song);
+    get_playing_music(g_did);
+  });
+
+  socket.on('downloading', function(data) {
+    console.log('downloading:' +  data);
+    addDataToList("downloading", data);
+  });
+  // end websocket io
+
+  // == bind controls
+  $("#refreshButton").on("click", () => {
+    build_music_list();
+  });
+
+  $("#play").on("click", () => {
+    var search_key = $("#music-name").val();
+    var filename=$("#music-filename").val();
+    let cmd = "播放歌曲"+search_key+"|"+filename;
+    sendcmd(cmd);
+  });
+  $("#download").on("click", () => {
+    var search_key = $("#music-name").val();
+    var name=$("#music-filename").val();
+    $.post(`/downloadmusic?did=${g_did}&search_key=${search_key}&name=${name}`, 
+      function(data, status) {
+        res = JSON.stringify(data);
+        console.log(`download music ${search_key}: ${res}, ${status}`);
+        addDataToList("download", data.ret);
+    });
+  });
+
+  $("#volume").on('input', function () {
+    var value = $(this).val();
+    sendcmd("set_volume#"+value);
+  });
+
+  $("#status").on("click", () => {
+    sendMessage("test");
+  });
+
+  // 切换列表的可见性
+  $("#toggle-log").on("click", () => {
+    var listContainer = document.querySelector('.hidden-list-container');
+    if (listContainer.style.display === 'none') {
+      listContainer.style.display = 'block';
+    } else {
+      listContainer.style.display = 'none';
+    }
+  });
+  // end bind
+  
+  // == function definitions
+  function init_device(data) {
+    if (!data || !data.mi_did) {
+      console.log('No device information available');
+      return;
+    }
+
+    localStorage.setItem('mi_did', data.mi_did);
+
+    var did = localStorage.getItem('cur_did');
+    var dids = [];
+    if (data.mi_did != null) {
+      dids = data.mi_did.split(',');
+    }
+    console.log('cur_did', did);
+    console.log('dids', dids);
+    if ((dids.length > 0) && (did == null || did == "" || !dids.includes(did))) {
+      did = dids[0];
+      localStorage.setItem('cur_did', did);
+    }
+    window.did = did;
+    console.log('cur_did', did);
+    g_did = did;
+
+    // 拉取声音
+    $.get(`/getvolume?did=${did}`, function(data, status) {
+      console.log(data, status, data["volume"]);
+      $("#volume").val(data.volume);
+    });
+
+    // 拉取版本
+    $.get("/getversion", function(data, status) {
+      console.log(data, status, data["version"]);
+      $("#version").text(`(${data.version})`);
+    });
+
+    // 每3秒获取下正在播放的音乐
+    get_playing_music(did);
+    get_downloading_music(did);
+    setInterval(() => {
+      //get_playing_music(did);
+      //get_downloading_music(did);
+    }, 3000);
+  }
+
+  function sendcmd(cmd) {
+    $.ajax({
+      type: "POST",
+      url: "/cmd",
+      contentType: "application/json",
+      data: JSON.stringify({did: g_did, cmd: cmd}),
+      success: () => {
+        // 请求成功时执行的操作
+      },
+      error: () => {
+        // 请求失败时执行的操作
+      }
+    });
+  }
 
   function append_op_button_name(name) {
     append_op_button(name, name);
@@ -46,106 +175,50 @@ $(function(){
     $container.append($button);
   }
 
-  $("#play").on("click", () => {
-    var search_key = $("#music-name").val();
-    var filename=$("#music-filename").val();
-    let cmd = "播放歌曲"+search_key+"|"+filename;
-    sendcmd(cmd);
-  });
-  $("#search").on("click", () => {
-    var search_key = $("#music-name").val();
-    var filename=$("#music-filename").val();
-    let cmd = "下载歌曲"+search_key+"|"+filename;
-    sendcmd(cmd);
-  });
-
-  $("#volume").on('input', function () {
-    var value = $(this).val();
-    sendcmd("set_volume#"+value);
-  });
-
-  function sendcmd(cmd) {
-    $.ajax({
-      type: "POST",
-      url: "/cmd",
-      contentType: "application/json",
-      data: JSON.stringify({cmd: cmd}),
-      success: () => {
-        // 请求成功时执行的操作
-      },
-      error: () => {
-        // 请求失败时执行的操作
+  function get_playing_music(did) {
+    if (!did) {
+      console.log('No device is available');
+      return;
+    }
+    $.get(`/playingmusic?did=${did}`, function(data, status) {
+      if (!data) {
+        console.log('No playing info available');
+        return;
       }
-    });
-  }
-
-  // 监听输入框的输入事件
-  $("#music-name").on('input', function() {
-    var inputValue = $(this).val();
-    // 发送Ajax请求
-    $.ajax({
-      url: "searchmusic", // 服务器端处理脚本
-      type: "GET",
-      dataType: "json",
-      data: {
-        name: inputValue
-      },
-      success: function(data) {
-        // 清空datalist
-        $("#autocomplete-list").empty();
-        // 添加新的option元素
-        $.each(data, function(i, item) {
-          $('<option>').val(item).appendTo("#autocomplete-list");
-        });
+      var playing = data;
+      var song = "当前无播放";
+      if(playing.is_playing){
+        song = playing.cur_music;
+        selectCurrentSong(song);
       }
-    });
-  });
-
-  function get_playing_music() {
-    $.get("/playingmusic", function(data, status) {
-      var song = data;
-      if(song === '')
-        song = "当前无播放";
-      console.log(song);
+      console.log(`current song: ${song}`);
       $("#playering-music").text(song);
-      selectCurrentSong(song);
     });
   }
 
-  function get_downloading_music() {
+  function get_downloading_music(did) {
     $.get("/downloadingmusic", function(data, status) {
       console.log(data);
       $("#downloading-music").text(data);
     });
   }
 
-  // 每3秒获取下正在播放的音乐
-  get_playing_music();
-  get_downloading_music();
-  setInterval(() => {
-    //get_playing_music();
-    //get_downloading_music();
-  }, 3000);
-
-  // create music list
-  $musicList=$("#musicList");
-  var songs = [
-    /* 这里添加歌曲对象，包含歌曲名称、艺术家等信息 */
-  ];
-  
   function build_music_list(){
-    $.get("/getmusiclist", function(data, status) {
-      console.log(data);
-      songs = JSON.parse(data);
-      // [test] fake data
-      //songs = Array.from({length:100}, (_, index)=>`song ${index +1}`)
+    $.get("/musiclist", function(data, status) {
+      console.log(`build music list: ${data}, ${status}`);
+      $.each(data, function(key, value) {
+        let cnt = value.length;
+        if (key === "所有歌曲") {
+          g_songs = value;
+        }
+      });
       renderPlaylist();
     });
   }
   
   function renderPlaylist() {
       musicList.innerHTML = '';
-      songs.forEach((song, index) => {
+      g_songs.forEach((song, index) => {
           let li = document.createElement('li');
           //li.textContent = `${index + 1}. ${song.name} - ${song.artist}`;
           li.textContent = `${index + 1}. ${song}`;
@@ -158,7 +231,7 @@ $(function(){
   function playSong(event) {
       let selectedIndex = event.target.dataset.index;
       highlightCurrentSong(selectedIndex);
-      let song = songs[selectedIndex];
+      let song = g_songs[selectedIndex];
       console.log(`Playing song: ${song}`);
       let cmd = "播放歌曲"+song+"|"+song;
       sendcmd(cmd);
@@ -171,7 +244,9 @@ $(function(){
       }
       var cur = musicList.children[index];
       cur.classList.add('playing');
-      scrollToChild(musicList, cur);
+      setTimeout(() => {
+        scrollToChild(musicList, cur);
+      }, 500);
   }
 
   function selectCurrentSong(song) {
@@ -193,42 +268,6 @@ $(function(){
     parent.scrollTop = offsetTop;
   }
 
-  $("#refreshButton").on("click", () => {
-    build_music_list();
-  });
-
-  build_music_list();
-
-  // update websocket io
-  /* const socket = io("ws://localhost:8090/", {
-    reconnectionDelayMax: 10000,
-    query: {
-      "my-key": "my-value"
-    }
-  }); */
-  socket = io.connect();
-  socket.on('connect', function() {
-      console.log('Connected to WebSocket server');
-  });
-
-  socket.on('disconnect', function() {
-      console.log('Disconnected from WebSocket server');
-  });
-
-  socket.on('response', function(data) {
-      $('#messages').append('<p>' + data.data + '</p>');
-  });
-
-  socket.on('playing', function(data) {
-    console.log('playing:' +  data.song);
-    get_playing_music();
-  });
-
-  socket.on('downloading', function(data) {
-    console.log('downloading:' +  data);
-    addDataToList("downloading", data);
-  });
-
   // 发送消息到后端
   function sendMessage(data) {
     console.log("Connected: " + socket.connected);
@@ -239,20 +278,6 @@ $(function(){
         console.log("response: " + res);
     });
   }
-
-  $("#status").on("click", () => {
-    sendMessage("test");
-  });
-
-  // 切换列表的可见性
-  $("#toggle-log").on("click", () => {
-    var listContainer = document.querySelector('.hidden-list-container');
-    if (listContainer.style.display === 'none') {
-      listContainer.style.display = 'block';
-    } else {
-      listContainer.style.display = 'none';
-    }
-  });
 
   // 添加数据到列表的函数
   function addDataToList(data1, data2) {
@@ -269,4 +294,5 @@ $(function(){
     else
       listContainer.appendChild(newListItem);
   }
+  // end function
 });

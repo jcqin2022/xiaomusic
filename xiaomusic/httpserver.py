@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-import os
-import sys
-import traceback
 import asyncio
 import hashlib
 import json
@@ -50,144 +46,13 @@ from xiaomusic.utils import (
     remove_id3_tags,
     try_add_access_control_param,
 )
-
-from flask import Flask, request, send_from_directory, current_app
-from flask_socketio import SocketIO, emit
-from waitress import serve
-from threading import Thread
-
-from xiaomusic.config import (
-    KEY_WORD_DICT,
-)
-
-from xiaomusic import (
-    __version__,
-)
-
-# 隐藏 flask 启动告警
-# https://gist.github.com/jerblack/735b9953ba1ab6234abb43174210d356
-#from flask import cli
-#cli.show_server_banner = lambda *_: None
+from xiaomusic.socket import SocketInit
 
 xiaomusic = None
 config = None
 log = None
 
-app = Flask(__name__)
-host = "0.0.0.0"
-port = 8090
-static_path = "music"
-xiaomusic = None
-log = None
-socketio = SocketIO(app)
-clients_sid = {}
 
-
-@app.route("/allcmds")
-def allcmds():
-    return KEY_WORD_DICT
-
-@app.route("/getversion", methods=["GET"])
-def getversion():
-    log.debug("getversion %s", __version__)
-    return {
-        "version": __version__,
-    }
-
-@app.route("/getvolume", methods=["GET"])
-def getvolume():
-    volume = xiaomusic.get_volume_ret()
-    return {
-        "volume": volume,
-    }
-
-@app.route("/getmusiclist", methods=["GET"])
-def getmusiclist():
-    musics = xiaomusic.get_music_list()
-    return musics
-
-@app.route("/searchmusic", methods=["GET"])
-def searchmusic():
-    name = request.args.get('name')
-    return xiaomusic.searchmusic(name)
-
-@app.route("/playingmusic", methods=["GET"])
-def playingmusic():
-    return xiaomusic.playingmusic()
-
-@app.route("/downloadingmusic", methods=["GET"])
-async def downloadingmusic():
-    return await xiaomusic.call_main_thread_function(xiaomusic.downloadingmusic)
-
-@app.route("/", methods=["GET"])
-def redirect_to_index():
-    return send_from_directory("static", "index.html")
-
-
-@app.route("/cmd", methods=["POST"])
-async def do_cmd():
-    data = request.get_json()
-    cmd = data.get("cmd")
-    if len(cmd) > 0:
-        log.debug("docmd. cmd:%s", cmd)
-        xiaomusic.set_last_record(cmd)
-        return {"ret": "OK"}
-    return {"ret": "Unknow cmd"}
-
-@app.route("/getsetting", methods=["GET"])
-async def getsetting():
-    config = xiaomusic.getconfig()
-    log.debug(config)
-
-    alldevices = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
-    log.info(alldevices)
-    data = {
-        "mi_did": config.mi_did,
-        "mi_did_list": alldevices["did_list"],
-        "mi_hardware": config.hardware,
-        "mi_hardware_list": alldevices["hardware_list"],
-        "xiaomusic_search": config.search_prefix,
-        "xiaomusic_proxy": config.proxy,
-    }
-    return data
-
-@app.route("/savesetting", methods=["POST"])
-async def savesetting():
-    data = request.get_json()
-    log.info(data)
-    await xiaomusic.saveconfig(data)
-    return "save success"
-
-# Support socket IO
-@socketio.on('connect')
-def handle_connect():
-    clients_sid[request.sid] = request.sid
-    log.debug(f'Client connected: {request.sid}')
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    del clients_sid[request.sid]
-    log.debug(f'Client disconnected: {request.sid}')
-
-@socketio.on('message')
-def handle_message(data):
-    log.debug(f'Received message: {data}')
-    #if(callback):
-    #    callback({"data":"playing"})
-    return data
-    
-def emit_message(message, data):
-    with app.app_context():
-        socketio.emit(message, data)
-
-def static_path_handler(filename):
-    log.debug(filename)
-    log.debug(static_path)
-    absolute_path = os.path.abspath(static_path)
-    log.debug(absolute_path)
-    return send_from_directory(absolute_path, filename)
-
-# [alic] New server: Uvicorn(ASGI server) + FastAPI(Web framework)
 @asynccontextmanager
 async def app_lifespan(app):
     if xiaomusic is not None:
@@ -271,6 +136,7 @@ def HttpInit(_xiaomusic):
 
     folder = os.path.dirname(__file__)
     app.mount("/static", AuthStaticFiles(directory=f"{folder}/static"), name="static")
+    SocketInit(_xiaomusic, app)
     reset_http_server()
 
 
@@ -581,7 +447,7 @@ class DownloadOneMusic(BaseModel):
     url: str
 
 
-# 下载单首歌曲
+# 下载单首歌曲+URL
 @app.post("/downloadonemusic")
 async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verification)):
     try:
@@ -664,6 +530,9 @@ def safe_redirect(url):
 
 @app.get("/music/{file_path:path}")
 async def music_file(request: Request, file_path: str, key: str = "", code: str = ""):
+    # [alic] file_path will be empty sometimes.
+    if not file_path:
+        raise HTTPException(status_code=400, detail="File path is required")
     if not access_key_verification(f"/music/{file_path}", key, code):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -765,3 +634,21 @@ async def get_redoc_documentation(Verifcation=Depends(verification)):
 @app.get("/openapi.json", include_in_schema=False)
 async def openapi(Verifcation=Depends(verification)):
     return get_openapi(title=app.title, version=app.version, routes=app.routes)
+
+# [alic] support single song download without url
+# 下载单首歌曲+search+key
+@app.post("/downloadmusic")
+async def downloadmusic(did, search_key, name):
+    try:
+        if not search_key:
+            return {"ret": "歌曲名为空"}
+        if name == "":
+            name = search_key
+        if xiaomusic is not None and xiaomusic.is_music_exist(name):
+            return {"ret": name+" 已存在"}
+        if xiaomusic is not None and len(xiaomusic.devices) > 0:
+            await xiaomusic.devices[did].download_with_output(search_key, name)
+            return {"ret": "下载结束"}
+    except Exception as e:
+        log.exception(f"Execption {e}")
+    return {"ret": "下载失败"}

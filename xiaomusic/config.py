@@ -3,15 +3,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
-#from res_loader import get_resource_path
+# [alic] read from res_loader import get_resource_path
 from xiaomusic.res_loader import get_resource_path
 from dataclasses import asdict, dataclass, field
-from typing import Any, Iterable, get_type_hints
+from typing import get_type_hints
 
 from xiaomusic.utils import validate_proxy
 
-LATEST_ASK_API = "https://userprofile.mina.mi.com/device_profile/v2/conversation?source=dialogu&hardware={hardware}&timestamp={timestamp}&limit=2"
-COOKIE_TEMPLATE = "deviceId={device_id}; serviceToken={service_token}; userId={user_id}"
 HARDWARE_COMMAND_DICT = {
     # hardware: (tts_command, wakeup_command, volume_command)
     "LX06": ("5-1", "5-5", "2-1"),
@@ -32,9 +30,6 @@ HARDWARE_COMMAND_DICT = {
     "X10A": ("7-3", "7-4", "2-1"),  # 小米智能家庭屏10
     # add more here
 }
-
-
-DEFAULT_COMMAND = ("5-1", "5-5", "2-1")
 
 # 默认口令
 def default_key_word_dict():
@@ -69,42 +64,6 @@ KEY_WORD_ARG_BEFORE_DICT = {
     "分钟后关机": True,
 }
 
-KEY_WORD_DICT = {
-    "分钟后关机",
-    "播放歌曲",
-    "下一首",
-    "上一首",
-    "单曲循环",
-    "全部循环",
-    "随机播放",
-    "关机",
-    "刷新列表",
-    "播放列表第",
-    "播放列表",
-    "加入收藏",
-    "收藏歌曲",
-    "取消收藏",
-}
-# 匹配优先级
-# KEY_MATCH_ORDER = [
-#     "set_volume#",
-#     "get_volume#",
-#     "分钟后关机",
-#     "播放歌曲",
-#     "放歌曲",
-#     "下载歌曲",
-#     "下一首",
-#     "单曲循环",
-#     "全部循环",
-#     "随机播放",
-#     "关机",
-#     "停止播放",
-# ]
-
-# 命令参数在前面
-KEY_WORD_ARG_BEFORE_DICT = {
-    "分钟后关机": True,
-}
 
 # 口令匹配优先级
 def default_key_match_order():
@@ -125,10 +84,6 @@ def default_key_match_order():
         "取消收藏",
     ]
 
-SUPPORT_MUSIC_TYPE = [
-    ".mp3",
-    ".flac",
-]
 
 @dataclass
 class Device:
@@ -143,9 +98,6 @@ class Device:
 
 @dataclass
 class Config:
-    hardware: str = os.getenv("MI_HARDWARE", "L07A")
-    mute_xiaoai: bool = True
-    use_command: bool = False
     account: str = os.getenv("MI_USER", "")
     password: str = os.getenv("MI_PASS", "")
     mi_did: str = os.getenv("MI_DID", "")  # 逗号分割支持多设备
@@ -192,7 +144,10 @@ class Config:
         "XIAOMUSIC_USE_MUSIC_AUDIO_ID", "1582971365183456177"
     )
     use_music_id: str = os.getenv("XIAOMUSIC_USE_MUSIC_ID", "355454500")
-    log_file: str = os.getenv("XIAOMUSIC_LOG_FILE", "/tmp/xiaomusic.txt")
+    log_file: str = os.getenv("XIAOMUSIC_LOG_FILE", "./xiaomusic.log")
+    # [alic] add log level from config file
+    log_level: str = os.getenv("XIAOMUSIC_LOG_LEVEL", "INFO")
+    uvicorn_log_level: str = os.getenv("UVICORN_LOG_LEVEL", "INFO")
     # 模糊搜索匹配的最低相似度阈值
     fuzzy_match_cutoff: float = float(os.getenv("XIAOMUSIC_FUZZY_MATCH_CUTOFF", "0.6"))
     # 开启模糊搜索
@@ -269,18 +224,8 @@ class Config:
     @classmethod
     def from_options(cls, options: argparse.Namespace) -> Config:
         config = {}
-        config_path = options.config
-        try:
-            if not config_path:
-                config_path = "config.json"
-            if config_path:
-                #get merged config path
-                config_path = get_resource_path(config_path)
-                config = cls.read_from_file(config_path)
-        except FileNotFoundError:
-            print(f"The file {config_path} does not exist.")
-        except json.JSONDecodeError:
-            print(f"The file {config_path} contains invalid JSON.")
+        if options.config:
+            config = cls.read_from_file(options.config)
         for key, value in vars(options).items():
             if value is not None and key in cls.__dataclass_fields__:
                 config[key] = value

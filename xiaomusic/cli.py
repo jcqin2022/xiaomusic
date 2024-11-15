@@ -91,8 +91,17 @@ def main():
     print(LOGO.format(f"XiaoMusic v{__version__} by: github.com/hanxi"))
 
     options = parser.parse_args()
+    # [alic] read config from ./config.json
     config = Config.from_options(options)
-
+    # [alic] read config before logger from conf/setting.json
+    try:
+        filename = config.getsettingfile()
+        with open(filename, encoding="utf-8") as f:
+            data = json.loads(f.read())
+            config.update_config(data)
+    except Exception as e:
+        print(f"Execption {e}")
+    
     LOGGING_CONFIG = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -119,7 +128,7 @@ def main():
                 "stream": "ext://sys.stdout",
             },
             "file": {
-                "level": "INFO",
+                "level": config.log_level,
                 "class": "logging.handlers.RotatingFileHandler",
                 "formatter": "access",
                 "filename": config.log_file,
@@ -133,29 +142,21 @@ def main():
                     "default",
                     "file",
                 ],
-                "level": "INFO",
+                "level": config.uvicorn_log_level,
             },
             "uvicorn.error": {
-                "level": "INFO",
+                "level": config.uvicorn_log_level,
             },
             "uvicorn.access": {
                 "handlers": [
                     "access",
                     "file",
                 ],
-                "level": "INFO",
+                "level": config.uvicorn_log_level,
                 "propagate": False,
             },
         },
     }
-
-    try:
-        filename = config.getsettingfile()
-        with open(filename, encoding="utf-8") as f:
-            data = json.loads(f.read())
-            config.update_config(data)
-    except Exception as e:
-        print(f"Execption {e}")
 
     def run_server(port):
         xiaomusic = XiaoMusic(config)
