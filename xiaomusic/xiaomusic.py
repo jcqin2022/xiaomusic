@@ -1609,15 +1609,15 @@ class XiaoMusicDevice:
             if not self.config.miio_tts_command:
                 self.log.debug("Call MiNAService tts.")
                 # [alic-test]
-                # await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
+                await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
             else:
                 self.log.debug("Call MiIOService tts.")
                 value = value.replace(" ", ",")  # 不能有空格
-                # await miio_command(
-                #     self.xiaomusic.miio_service,
-                #     self.did,
-                #     f"{self.config.miio_tts_command} {value}",
-                # )
+                await miio_command(
+                    self.xiaomusic.miio_service,
+                    self.did,
+                    f"{self.config.miio_tts_command} {value}",
+                )
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -1637,21 +1637,21 @@ class XiaoMusicDevice:
             audio_id = await self._get_audio_id(name)
             if self.config.continue_play:
                 # [alic-test]
-                # ret = await self.xiaomusic.mina_service.play_by_music_url(
-                #     device_id, url, _type=1, audio_id=audio_id
-                # )
+                ret = await self.xiaomusic.mina_service.play_by_music_url(
+                    device_id, url, _type=1, audio_id=audio_id
+                )
                 self.log.info(
                     f"play_one_url continue_play device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             elif self.config.use_music_api:
-                # ret = await self.xiaomusic.mina_service.play_by_music_url(
-                #     device_id, url, audio_id=audio_id
-                # )
+                ret = await self.xiaomusic.mina_service.play_by_music_url(
+                    device_id, url, audio_id=audio_id
+                )
                 self.log.info(
                     f"play_one_url play_by_music_url device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             else:
-                # ret = await self.xiaomusic.mina_service.play_by_url(device_id, url)
+                ret = await self.xiaomusic.mina_service.play_by_url(device_id, url)
                 self.log.info(
                     f"play_one_url play_by_url device_id:{device_id} ret:{ret} url:{url}"
                 )
