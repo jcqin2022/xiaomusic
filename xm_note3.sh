@@ -34,7 +34,8 @@ HOME_BASE="/home/alic"
 NAME="xiaomusic"
 LOG_FILE="$HOME_BASE/log.txt"
 SRC_PATH="$HOME_BASE/miservice/$NAME"
-APP_PATH="$HOME_BASE/miservice/$NAME/dist"
+DIST_PATH="$SRC_PATH/dist"
+APP_PATH="$HOME_BASE/miservice/dist"
 APP_BIN="xiaomusic"
 VENV_NAME=".venv"
 ENV_PATH="$SRC_PATH/$VENV_NAME"
@@ -118,12 +119,23 @@ case "$1" in
         pyinstaller $SRC_PATH/$NAME.spec
         deactivate
         ;;
+    install)
+        echo "install $NAME to DIST"
+        cp $DIST_PATH/$APP_BIN $APP_PATH
+        if [ ! -d "$APP_PATH/conf" ]; then
+            echo "conf folder not found in $APP_PATH, copying..."
+            cp -r $SRC_PATH/conf $APP_PATH
+        fi
+        ;;
     run)
-        echo "run $NAME"
-        $APP_PATH/$APP_BIN
+        echo "run $NAME in backgound"
+        pushd "$APP_PATH"
+        nohup "./$APP_BIN" > /dev/null 2>&1 &
+        echo -e "`date`:started xiaomusic:8090" >> $LOG_FILE
+        popd
         ;;
     *)
-        echo "Usage: $0 {install|python|env|src|build|run|installer}"
+        echo "Usage: $0 {install|python|env|src|build|installer|install|run}"
         exit 1
         ;;
 esac
