@@ -119,7 +119,7 @@ case "$1" in
         pyinstaller $SRC_PATH/$NAME.spec
         deactivate
         ;;
-    install)
+    deploy)
         echo "install $NAME to DIST"
         cp $DIST_PATH/$APP_BIN $APP_PATH
         if [ ! -d "$APP_PATH/conf" ]; then
@@ -135,7 +135,7 @@ case "$1" in
         popd
         ;;
     *)
-        echo "Usage: $0 {install|python|env|src|build|installer|install|run}"
+        echo "Usage: $0 {install|python|env|src|build|installer|deploy|run}"
         exit 1
         ;;
 esac
