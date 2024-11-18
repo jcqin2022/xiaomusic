@@ -1505,7 +1505,13 @@ class XiaoMusicDevice:
 
         cmd = " ".join(sbp_args)
         self.log.info(f"download cmd: {cmd}")
-        self._download_proc = await asyncio.create_subprocess_exec(*sbp_args)
+        # [alic] add pipe to monitor output of download process.
+        self._download_proc = await asyncio.create_subprocess_exec(*sbp_args,
+                                                                   stdout=asyncio.subprocess.PIPE,
+                                                                   stderr=asyncio.subprocess.PIPE)
+        # Start monitoring
+        self.downloading_task = asyncio.create_task(self.monitor_download_status())
+        # [alic] end.
         await self.do_tts(f"正在下载歌曲{search_key}")
 
     # 继续播放被打断的歌曲
@@ -1843,39 +1849,39 @@ class XiaoMusicDevice:
         self.log.info("download with output: search_key:%s name:%s", search_key, name)
         if not self.xiaomusic.is_music_exist(name):
             await self.download(search_key, name)
-            self.log.info("正在下载中 %s", search_key + ":" + name)
+            self.log.info("正在下载 %s", search_key + ":" + name)
+            await emit_message("downloading", f"正在下载 {name}")
             await self._download_proc.wait()
             # 把文件插入到播放列表里
-            self.add_download_music(name)
+            await self.add_download_music(name)
+            await emit_message("downloading", f"添加播放列表 {name}")
         else:
             self.log.info("歌曲已经存在 %s", name)
-    
-    # 正在downloading中的音乐
-    async def downloadingmusic(self, **kwargs):
-        download_msg = "无下载"
-        if self.is_downloading() and self.download_proc.stdout:
-            try:
-                #stdout, stderr = await self.download_proc.communicate
-                data = await self.download_proc.stdout.readline()
-                line = data.decode().strip()
-                emit_message("downloading", line)
-                if not line:
-                    line = ""
-            except Exception as e:
-                self.log.debug("downloadingmusic. exception:%s", e)
-                line = "等待中..."
-            self.log.debug(f"downloading: {line}")
-            download_msg = line
-        return download_msg
-    
-    async def poll_download_status(self):
-        self.log.debug(f"poll download status now.")
+            await emit_message("downloading", f"歌曲已经存在 {name}")
+    # create tasks to monitor stdout and stderr.
+    async def  monitor_download_status(self):
+        self.log.debug(f"monitor download status now.")
+        if self.isdownloading():
+            stdout_task = asyncio.create_task(self.handle_stdout(self._download_proc.stdout))
+            stderr_task = asyncio.create_task(self.handle_stderr(self._download_proc.stderr))
+            await asyncio.gather(stdout_task, stderr_task)
+
+    async def handle_stdout(self, stdout):
         while True:
-            #self.log.debug("Listening new message, timestamp: %s", self.last_timestamp)
-            msg = await self.downloadingmusic()
-            if(msg):
-                emit_message("downloading", msg)
+            line = await stdout.readline()
+            if line:
+                msg = line.decode().rstrip()
+                await emit_message("downloading", msg)
+                self.log.debug(f"downloading: {msg}")
             else:
-                emit_message("downloading", "下载结束")
-                self.log.debug(f"downloading: 下载结束")
+                break
+
+    async def handle_stderr(self, stderr):
+        while True:
+            line = await stderr.readline()
+            if line:
+                msg = line.decode().rstrip()
+                await emit_message("downloading", msg)
+                self.log.debug(f"downloading: {msg}")
+            else:
                 break

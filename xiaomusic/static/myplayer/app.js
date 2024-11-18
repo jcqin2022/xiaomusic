@@ -49,8 +49,7 @@ $(function(){
   });
 
   socket.on('downloading', function(data) {
-    console.log('downloading:' +  data);
-    addDataToList("downloading", data);
+    addDataToList("下载", data);
   });
   // end websocket io
 
@@ -72,7 +71,7 @@ $(function(){
       function(data, status) {
         res = JSON.stringify(data);
         console.log(`download music ${search_key}: ${res}, ${status}`);
-        addDataToList("download", data.ret);
+        addDataToList("下载", data.ret);
     });
   });
 
@@ -88,10 +87,10 @@ $(function(){
   // 切换列表的可见性
   $("#toggle-log").on("click", () => {
     var listContainer = document.querySelector('.hidden-list-container');
-    if (listContainer.style.display === 'none') {
+    if (listContainer.style.display === '') {
       listContainer.style.display = 'block';
     } else {
-      listContainer.style.display = 'none';
+      listContainer.style.display = '';
     }
   });
   // end bind
@@ -287,6 +286,7 @@ $(function(){
     var dataSpan2 = document.createElement('span');
     dataSpan1.textContent = data1;
     dataSpan2.textContent = data2;
+    dataSpan2.setAttribute('title', data2);
     newListItem.appendChild(dataSpan1);
     newListItem.appendChild(dataSpan2);
     if(listContainer.children.length > 1)

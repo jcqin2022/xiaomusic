@@ -165,6 +165,7 @@ footer {
 .hidden-list-container {
   display: none;
   margin-top: 10px;
+  max-width: 500px;
 }
 
 .hidden-list {
@@ -172,9 +173,7 @@ footer {
   overflow-y: auto;
   padding: 0;
   margin: 0;
-  width: 400px;
-  max-height: 260px;
-  height: 260px;
+  max-height: 300px;
 }
 
 .hidden-list li {
@@ -191,12 +190,22 @@ footer {
   white-space: nowrap; /* 文本不换行 */
 }
 .hidden-list li span:last-child {
-  width: 300px; /* 例如，限制第二列宽度为容器宽度的80% */
+  width: 400px; /* 例如，限制第二列宽度为容器宽度的80% */
   overflow: hidden; /* 超出部分隐藏 */
   text-overflow: ellipsis; /* 超出文本显示省略号 */
   white-space: nowrap; /* 文本不换行 */
 }
-
+.hidden-list li span:last-child:hover::after {
+  content: attr(title);
+  position: absolute;
+  background-color: white;
+  color: black;
+  padding: 5px 10px;
+  border: 1px solid #000;
+  border-radius: 5px;
+  z-index: 1000;
+  display: block;
+}
 .toggle-btn {
   padding: 5px 10px;
   cursor: pointer;
