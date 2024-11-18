@@ -6,7 +6,8 @@ a = Analysis(
     pathex=['xiaomusic'],
     binaries=[],
     datas=[
-		('xiaomusic/static', 'xiaomusic/static')
+		('xiaomusic/static', 'xiaomusic/static'),
+        ('plugins', 'plugins')
 	],
     hiddenimports=['engineio.async_drivers.threading'],
     hookspath=[],

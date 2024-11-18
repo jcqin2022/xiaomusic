@@ -11,7 +11,8 @@
             "program": "${workspaceFolder}/xiaomusic.py",
             "console": "integratedTerminal",
             //"args": ["--config","./config.json"],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
         }
     ]
 }
