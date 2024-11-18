@@ -38,6 +38,7 @@ APP_PATH="$HOME_BASE/$NAME/dist"
 APP_BIN="xiaomusic"
 ENV_PATH="$SRC_PATH/.env"
 DEFAULT_VER="3.10.15"
+VENV_NAME=".env"
 
 
 function apply_python() {
@@ -97,7 +98,18 @@ case "$1" in
         ;;
     build)
         echo "build src for $NAME"
-        source $ENV_PATH/bin/activate
+        if [ -n "$2" ]; then
+            venv_name="$2"
+        else
+            venv_name=$VENV_NAME
+        fi
+        activate_path=$SRC_PATH/$venv_name/bin/activate
+        if [ ! -f "$activate_path" ]; then
+            echo "Error: $activate_path does not exist."
+            echo ".env or .venv?"
+            exit 1
+        fi
+        source $activate_path
         pdm install
         deactivate
         ;;
