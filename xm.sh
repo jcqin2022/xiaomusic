@@ -99,6 +99,11 @@ case "$1" in
         echo "build src for $NAME"
         source $ENV_PATH/bin/activate
         pdm install
+        deactivate
+        ;;
+    installer)
+        echo "create installer for $NAME"
+        source $ENV_PATH/bin/activate
         pyinstaller $SRC_PATH/$NAME.spec
         deactivate
         ;;
@@ -107,7 +112,7 @@ case "$1" in
         $APP_PATH/$APP_BIN
         ;;
     *)
-        echo "Usage: $0 {install|python|env|src|build|run}"
+        echo "Usage: $0 {install|python|env|src|build|run|installer}"
         exit 1
         ;;
 esac
