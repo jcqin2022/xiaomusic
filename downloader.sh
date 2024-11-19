@@ -27,6 +27,17 @@ FFMPEG_PATH="--ffmpeg-location"
 FFMPEG_PATH_VALUE="./ffmpeg/bin/"
 PLAY_LIST="--no-playlist"
 APP_BIN="yt-dlp"
+
+#VIDEO_FORMAT="-f"
+#VIDEO_FORMAT_VALUE="'bv[ext=mp4]+ba[ext=best]'"
+VIDEO_FORMAT=""
+VIDEO_FORMAT_VALUE=""
+EMBED_METADATA="--embed-metadata"
+MERGE_FORMAT="--merge-output-format"
+MERGE_FORMAT_VALUE="mp4"
+OUTPUT_FILE_FOMAT="'%(title)s.%(ext)s'"
+LIST_FORMAT="--list-formats"
+
 # APP_ARGS="$EXTRACT_AUDIO $SEARCH_PREFIX $AUDIO_FORMAT $DOWNLOAD_PATH $OUTPUT_FILE $FFMPEG_PATH $PLAY_LIST"
 function check() {
     if ! command -v $APP_BIN &> /dev/null; then
@@ -44,7 +55,7 @@ function check() {
     fi
 }
 
-function download() {
+function download_mp3() {
     file_name=$1
     if [ -z "$file_name" ]; then
         echo "download file name is empty $file_name"
@@ -64,7 +75,30 @@ function download() {
     $ENV_PATH/bin/$APP_BIN $app_args
 }
 
-function download_debug() {
+function download_video() {
+    url=$1
+    if [ -z "$url" ]; then
+        echo "download url is empty $url"
+        exit 0
+    else
+        echo "start downloading $url"
+    fi
+    echo "available formats for: $url"
+    $ENV_PATH/bin/$APP_BIN $url $LIST_FORMAT
+    app_args="$url\
+        $VIDEO_FORMAT $VIDEO_FORMAT_VALUE\
+        $EMBED_METADATA\
+        $MERGE_FORMAT $MERGE_FORMAT_VALUE\
+        $DOWNLOAD_PATH $DOWNLOAD_PATH_VALUE\
+        $OUTPUT_FILE $OUTPUT_FILE_FOMAT\
+        $FFMPEG_PATH $FFMPEG_PATH_VALUE"
+    echo "Prepare to download:"
+    echo "download args: $app_args"
+    #app_args="$SEARCH_PREFIX$file_name $EXTRACT_AUDIO"
+    $ENV_PATH/bin/$APP_BIN $app_args
+}
+
+function download_mp3_debug() {
     file_name=$1
     if [ -z "$file_name" ]; then
         echo "download file name is empty $file_name"
@@ -91,20 +125,25 @@ case "$1" in
     check)
         check
         ;;
-    download)
-        download $2
+    dm)
+        download_mp3 $2
+        ;;
+    dv)
+        download_video $2
         ;;
     debug)
         echo "debug"
-        download_debug "有风无风皆自由"
+        download_mp3_debug "有风无风皆自由"
         ;;
     test)
         echo "test"
-        whereis yt-dlp
-        download "有风无风皆自由"
+        #whereis yt-dlp
+        #download_mp3 "有风无风皆自由"
+        download_video "https://www.bilibili.com/video/BV1XnDnY2E6m"
+
         ;;
     *)
-        echo "Usage: $0 {check|download|debug|test}"
+        echo "Usage: $0 {check|dm-mp3|dv-video|debug|test}"
         exit 1
         ;;
 esac
