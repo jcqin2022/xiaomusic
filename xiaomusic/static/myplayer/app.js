@@ -77,7 +77,16 @@ $(function(){
 
   $("#volume").on('input', function () {
     var value = $(this).val();
-    sendcmd("set_volume#"+value);
+    $.ajax({
+      type: "POST",
+      url: "/setvolume",
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({did: g_did, volume: value}),
+      success: () => {
+      },
+      error: () => {
+      }
+    });
   });
 
   $("#status").on("click", () => {
