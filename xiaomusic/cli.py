@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import asyncio
 import json
 import os
 import signal
@@ -11,7 +10,18 @@ from xiaomusic import __version__
 from xiaomusic.config import Config
 from xiaomusic.httpserver import HttpInit
 from xiaomusic.httpserver import app as HttpApp
+from xiaomusic.httpserver import HttpInit
+from xiaomusic.httpserver import app as HttpApp
 from xiaomusic.xiaomusic import XiaoMusic
+
+LOGO = r"""
+ __  __  _                   __  __                 _
+ \ \/ / (_)   __ _    ___   |  \/  |  _   _   ___  (_)   ___
+  \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
+  /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
+ /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
+          {}
+"""
 
 LOGO = r"""
  __  __  _                   __  __                 _
@@ -31,8 +41,14 @@ def main():
         help="监听端口",
     )
     parser.add_argument(
+        "--port",
+        dest="port",
+        help="监听端口",
+    )
+    parser.add_argument(
         "--hardware",
         dest="hardware",
+        help="小爱音箱型号",
         help="小爱音箱型号",
     )
     parser.add_argument(
@@ -51,20 +67,6 @@ def main():
         help="xiaomi cookie",
     )
     parser.add_argument(
-        "--use_command",
-        dest="use_command",
-        action="store_true",
-        default=None,
-        help="use command to tts",
-    )
-    parser.add_argument(
-        "--mute_xiaoai",
-        dest="mute_xiaoai",
-        action="store_true",
-        default=None,
-        help="try to mute xiaoai answer",
-    )
-    parser.add_argument(
         "--verbose",
         dest="verbose",
         action="store_true",
@@ -81,6 +83,14 @@ def main():
         dest="ffmpeg_location",
         help="ffmpeg bin path",
     )
+    parser.add_argument(
+        "--enable_config_example",
+        dest="enable_config_example",
+        help="是否输出示例配置文件",
+        action="store_true",
+    )
+
+    print(LOGO.format(f"XiaoMusic v{__version__} by: github.com/hanxi"))
     parser.add_argument(
         "--enable_config_example",
         dest="enable_config_example",

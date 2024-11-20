@@ -10,40 +10,16 @@ from typing import get_type_hints
 
 from xiaomusic.utils import validate_proxy
 
-HARDWARE_COMMAND_DICT = {
-    # hardware: (tts_command, wakeup_command, volume_command)
-    "LX06": ("5-1", "5-5", "2-1"),
-    "L05B": ("5-3", "5-4", "2-1"),    
-    "S12": ("5-1", "5-5", "2-1"),  # 第一代小爱，型号MDZ-25-DA
-    "S12A": ("5-1", "5-5", "2-1"),
-    "LX01": ("5-1", "5-5", "2-1"),
-    "L06A": ("5-1", "5-5", "2-1"),
-    "LX04": ("5-1", "5-4", "2-1"),
-    "L05C": ("5-3", "5-4", "2-1"),
-    "L17A": ("7-3", "7-4", "2-1"),
-    "X08E": ("7-3", "7-4", "2-1"),
-    "LX05A": ("5-1", "5-5", "2-1"),  # 小爱红外版
-    "LX5A": ("5-1", "5-5", "2-1"),  # 小爱红外版
-    "L07A": ("5-1", "5-5", "2-1"),  # Redmi小爱音箱Play(l7a)
-    "L15A": ("7-3", "7-4", "2-1"),
-    "X6A": ("7-3", "7-4", "2-1"),  # 小米智能家庭屏6
-    "X10A": ("7-3", "7-4", "2-1"),  # 小米智能家庭屏10
-    # add more here
-}
 
 # 默认口令
 def default_key_word_dict():
     return {
-        "播放歌曲": "play",
-        "播放本地歌曲": "playlocal",
-        "关机": "stop",
         "下一首": "play_next",
         "上一首": "play_prev",
         "单曲循环": "set_play_type_one",
         "全部循环": "set_play_type_all",
         "随机播放": "set_random_play",
         "分钟后关机": "stop_after_minute",
-        "播放列表": "play_music_list",
         "刷新列表": "gen_music_list",
         "加入收藏": "add_to_favorites",
         "收藏歌曲": "add_to_favorites",
@@ -69,7 +45,6 @@ KEY_WORD_ARG_BEFORE_DICT = {
 def default_key_match_order():
     return [
         "分钟后关机",
-        "播放歌曲",
         "下一首",
         "上一首",
         "单曲循环",
@@ -162,6 +137,9 @@ class Config:
     )
     keywords_play: str = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
     keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
+    keywords_playlist: str = os.getenv(
+        "XIAOMUSIC_KEYWORDS_PLAYLIST", "播放列表,播放歌单"
+    )
     user_key_word_dict: dict[str, str] = field(
         default_factory=default_user_key_word_dict
     )
@@ -208,7 +186,11 @@ class Config:
         self.append_keyword(self.keywords_playlocal, "playlocal")
         self.append_keyword(self.keywords_play, "play")
         self.append_keyword(self.keywords_stop, "stop")
+        self.append_keyword(self.keywords_playlist, "play_music_list")
         self.append_user_keyword()
+        self.key_match_order = [
+            x for x in self.key_match_order if x in self.key_word_dict
+        ]
 
     def __post_init__(self) -> None:
         if self.proxy:

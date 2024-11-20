@@ -471,6 +471,52 @@ async def upload_yt_dlp_cookie(file: UploadFile = File(...)):
     }
 
 
+class PlayListObj(BaseModel):
+    name: str = ""  # 歌单名
+
+
+# 新增歌单
+@app.post("/playlistadd")
+async def playlistadd(data: PlayListObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.play_list_add(data.name)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Add failed, may be already exist."}
+
+
+# 移除歌单
+@app.post("/playlistdel")
+async def playlistdel(data: PlayListObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.play_list_del(data.name)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Del failed, may be not exist."}
+
+
+class PlayListMusicObj(BaseModel):
+    name: str = ""  # 歌单名
+    music_list: list[str]  # 歌曲名列表
+
+
+# 歌单新增歌曲
+@app.post("/playlistaddmusic")
+async def playlistaddmusic(data: PlayListMusicObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.play_list_add_music(data.name, data.music_list)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Add failed, may be playlist not exist."}
+
+
+# 歌单移除歌曲
+@app.post("/playlistdelmusic")
+async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.play_list_del_music(data.name, data.music_list)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Del failed, may be playlist not exist."}
+
+
+
 async def file_iterator(file_path, start, end):
     async with aiofiles.open(file_path, mode="rb") as file:
         await file.seek(start)
@@ -565,34 +611,7 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
         else:
             log.warning(f"Failed to convert file to MP3 format: {absolute_file_path}")
 
-    file_size = os.path.getsize(absolute_file_path)
-    range_start, range_end = 0, file_size - 1
-
-    range_header = request.headers.get("Range")
-    log.info(f"music_file range_header {range_header}")
-    if range_header:
-        range_match = range_pattern.match(range_header)
-        if range_match:
-            range_start = int(range_match.group(1))
-        if range_match.group(2):
-            range_end = int(range_match.group(2))
-
-        log.info(f"music_file in range {absolute_file_path}")
-
-    log.info(f"music_file {range_start} {range_end} {absolute_file_path}")
-    headers = {
-        "Content-Range": f"bytes {range_start}-{range_end}/{file_size}",
-        "Accept-Ranges": "bytes",
-    }
-    mime_type, _ = mimetypes.guess_type(file_path)
-    if mime_type is None:
-        mime_type = "application/octet-stream"
-    return StreamingResponse(
-        file_iterator(absolute_file_path, range_start, range_end),
-        headers=headers,
-        status_code=206 if range_header else 200,
-        media_type=mime_type,
-    )
+    return FileResponse(absolute_file_path)
 
 
 @app.options("/music/{file_path:path}")
@@ -615,10 +634,7 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
     if not os.path.exists(absolute_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    mime_type, _ = mimetypes.guess_type(absolute_file_path)
-    if mime_type is None:
-        mime_type = "image/jpeg"
-    return FileResponse(absolute_file_path, media_type=mime_type)
+    return FileResponse(absolute_file_path)
 
 
 @app.get("/docs", include_in_schema=False)
