@@ -10,8 +10,18 @@ HOME_BASE="/home/alic"
 NAME="xiaomusic"
 LOG_FILE="$HOME_BASE/log.txt"
 SRC_PATH="$HOME_BASE/$NAME"
+# update path for different devices
+if [ ! -d "$SRC_PATH" ]; then
+    SRC_PATH="$HOME_BASE/miservice/$NAME"
+fi
 VENV_NAME=".env"
 ENV_PATH="$SRC_PATH/$VENV_NAME"
+if [ ! -d "$ENV_PATH" ]; then
+    VENV_NAME=".venv"
+    ENV_PATH="$SRC_PATH/$VENV_NAME"
+fi
+echo "ENV_PATH: $ENV_PATH"
+# end update.
 DEFAULT_VER="3.10.15"
 
 DEBUG_LOG="debug.log"
