@@ -10,7 +10,18 @@ from xiaomusic import __version__
 from xiaomusic.config import Config
 from xiaomusic.httpserver import HttpInit
 from xiaomusic.httpserver import app as HttpApp
+from xiaomusic.httpserver import HttpInit
+from xiaomusic.httpserver import app as HttpApp
 from xiaomusic.xiaomusic import XiaoMusic
+
+LOGO = r"""
+ __  __  _                   __  __                 _
+ \ \/ / (_)   __ _    ___   |  \/  |  _   _   ___  (_)   ___
+  \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
+  /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
+ /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
+          {}
+"""
 
 LOGO = r"""
  __  __  _                   __  __                 _
@@ -30,8 +41,14 @@ def main():
         help="监听端口",
     )
     parser.add_argument(
+        "--port",
+        dest="port",
+        help="监听端口",
+    )
+    parser.add_argument(
         "--hardware",
         dest="hardware",
+        help="小爱音箱型号",
         help="小爱音箱型号",
     )
     parser.add_argument(
@@ -74,10 +91,27 @@ def main():
     )
 
     print(LOGO.format(f"XiaoMusic v{__version__} by: github.com/hanxi"))
+    parser.add_argument(
+        "--enable_config_example",
+        dest="enable_config_example",
+        help="是否输出示例配置文件",
+        action="store_true",
+    )
+
+    print(LOGO.format(f"XiaoMusic v{__version__} by: github.com/hanxi"))
 
     options = parser.parse_args()
+    # [alic] read config from ./config.json
     config = Config.from_options(options)
-
+    # [alic] read config before logger from conf/setting.json
+    try:
+        filename = config.getsettingfile()
+        with open(filename, encoding="utf-8") as f:
+            data = json.loads(f.read())
+            config.update_config(data)
+    except Exception as e:
+        print(f"Execption {e}")
+    
     LOGGING_CONFIG = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -104,7 +138,7 @@ def main():
                 "stream": "ext://sys.stdout",
             },
             "file": {
-                "level": "INFO",
+                "level": config.log_level,
                 "class": "logging.handlers.RotatingFileHandler",
                 "formatter": "access",
                 "filename": config.log_file,
@@ -118,29 +152,21 @@ def main():
                     "default",
                     "file",
                 ],
-                "level": "INFO",
+                "level": config.uvicorn_log_level,
             },
             "uvicorn.error": {
-                "level": "INFO",
+                "level": config.uvicorn_log_level,
             },
             "uvicorn.access": {
                 "handlers": [
                     "access",
                     "file",
                 ],
-                "level": "INFO",
+                "level": config.uvicorn_log_level,
                 "propagate": False,
             },
         },
     }
-
-    try:
-        filename = config.getsettingfile()
-        with open(filename, encoding="utf-8") as f:
-            data = json.loads(f.read())
-            config.update_config(data)
-    except Exception as e:
-        print(f"Execption {e}")
 
     def run_server(port):
         xiaomusic = XiaoMusic(config)

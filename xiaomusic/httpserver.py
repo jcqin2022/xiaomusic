@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+import mimetypes
 import os
 import re
 import secrets
@@ -25,7 +26,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -45,6 +46,7 @@ from xiaomusic.utils import (
     remove_id3_tags,
     try_add_access_control_param,
 )
+from xiaomusic.socket import SocketInit
 
 xiaomusic = None
 config = None
@@ -134,6 +136,7 @@ def HttpInit(_xiaomusic):
 
     folder = os.path.dirname(__file__)
     app.mount("/static", AuthStaticFiles(directory=f"{folder}/static"), name="static")
+    SocketInit(_xiaomusic, app)
     reset_http_server()
 
 
@@ -444,7 +447,7 @@ class DownloadOneMusic(BaseModel):
     url: str
 
 
-# 下载单首歌曲
+# 下载单首歌曲+URL
 @app.post("/downloadonemusic")
 async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verification)):
     try:
@@ -513,6 +516,7 @@ async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verificat
     return {"ret": "Del failed, may be playlist not exist."}
 
 
+
 async def file_iterator(file_path, start, end):
     async with aiofiles.open(file_path, mode="rb") as file:
         await file.seek(start)
@@ -572,6 +576,9 @@ def safe_redirect(url):
 
 @app.get("/music/{file_path:path}")
 async def music_file(request: Request, file_path: str, key: str = "", code: str = ""):
+    # [alic] file_path will be empty sometimes.
+    if not file_path:
+        raise HTTPException(status_code=400, detail="File path is required")
     if not access_key_verification(f"/music/{file_path}", key, code):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -582,7 +589,7 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
     if not os.path.exists(absolute_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    # 移除MP3 ID3 v2标签和填充
+    # 移除MP3 ID3 v2标签和填充，减少播放前延迟
     if config.remove_id3tag and is_mp3(file_path):
         log.info(f"remove_id3tag:{config.remove_id3tag}, is_mp3:True ")
         temp_mp3_file = remove_id3_tags(absolute_file_path, config)
@@ -643,3 +650,21 @@ async def get_redoc_documentation(Verifcation=Depends(verification)):
 @app.get("/openapi.json", include_in_schema=False)
 async def openapi(Verifcation=Depends(verification)):
     return get_openapi(title=app.title, version=app.version, routes=app.routes)
+
+# [alic] support single song download without url
+# 下载单首歌曲+search+key
+@app.post("/downloadmusic")
+async def downloadmusic(did, search_key, name):
+    try:
+        if not search_key:
+            return {"ret": "歌曲名为空"}
+        if name == "":
+            name = search_key
+        if xiaomusic is not None and xiaomusic.is_music_exist(name):
+            return {"ret": name+" 已存在"}
+        if xiaomusic is not None and len(xiaomusic.devices) > 0:
+            await xiaomusic.devices[did].download_with_output(search_key, name)
+            return {"ret": "下载结束"}
+    except Exception as e:
+        log.exception(f"Execption {e}")
+    return {"ret": "下载失败"}

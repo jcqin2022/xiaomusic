@@ -12,13 +12,15 @@ import urllib.parse
 from collections import OrderedDict
 from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
+# [alic] support websocket IO.
+from xiaomusic.socket import emit_message
 from pathlib import Path
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService, miio_command
 
 from xiaomusic import __version__
-from xiaomusic.analytics import Analytics
+#from xiaomusic.analytics import Analytics
 from xiaomusic.config import (
     KEY_WORD_ARG_BEFORE_DICT,
     Config,
@@ -37,6 +39,12 @@ from xiaomusic.const import (
 from xiaomusic.crontab import Crontab
 from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
+    Metadata,
+    chinese_to_number,
+    custom_sort_key,
+    deepcopy_data_no_sensitive_info,
+    extract_audio_metadata,
+    find_best_match,
     Metadata,
     chinese_to_number,
     custom_sort_key,
@@ -99,7 +107,7 @@ class XiaoMusic:
         self.update_devices()
 
         # 启动统计
-        self.analytics = Analytics(self.log)
+        #self.analytics = Analytics(self.log)
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
@@ -155,8 +163,9 @@ class XiaoMusic:
 
         log_file = self.config.log_file
         log_path = os.path.dirname(log_file)
-        if not os.path.exists(log_path):
-            os.makedirs(log_path)
+        # [alic] generate log with executable file.
+        # if not os.path.exists(log_path):
+        #     os.makedirs(log_path)
         if os.path.exists(log_file):
             os.remove(log_file)
         handler = RotatingFileHandler(
@@ -171,9 +180,10 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
-                self.log.debug(
-                    f"Listening new message, timestamp: {self.last_timestamp}"
-                )
+                # [alic] disable frequent debug message.
+                #self.log.debug(
+                #    f"Listening new message, timestamp: {self.last_timestamp}"
+                #)
                 session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
@@ -247,6 +257,8 @@ class XiaoMusic:
                     devices[did] = device
             self.config.devices = devices
             self.log.info(f"选中的设备: {devices}")
+            # [alic] update devices list here once get devices online
+            self.update_devices()
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -361,7 +373,7 @@ class XiaoMusic:
 
     def _get_last_query(self, device_id, data):
         did = self.get_did(device_id)
-        self.log.debug(f"_get_last_query device_id:{device_id} did:{did} data:{data}")
+        # self.log.debug(f"_get_last_query device_id:{device_id} did:{did} data:{data}")
         if d := data.get("data"):
             records = json.loads(d).get("records")
             if not records:
@@ -378,7 +390,7 @@ class XiaoMusic:
         did = last_record["did"]
         timestamp = last_record.get("time")
         query = last_record.get("query", "").strip()
-        self.log.debug(f"获取到最后一条对话记录：{query} {timestamp}")
+        # self.log.debug(f"获取到最后一条对话记录：{query} {timestamp}")
 
         if timestamp > self.last_timestamp[did]:
             self.last_timestamp[did] = timestamp
@@ -624,6 +636,7 @@ class XiaoMusic:
         self.music_list["所有歌曲"] = [
             name for name in self.all_music.keys() if name not in self._all_radio
         ]
+        self._append_custom_play_list()
 
         # 网络歌单
         try:
@@ -641,11 +654,9 @@ class XiaoMusic:
         for _, play_list in self.music_list.items():
             play_list.sort(key=custom_sort_key)
 
-        # 刷新自定义歌单
-        self.refresh_custom_play_list()
-
         # 更新每个设备的歌单
-        self.update_all_playlist()
+        for device in self.devices.values():
+            device.update_playlist()
 
         # 重建索引
         self._extra_index_search = {}
@@ -657,11 +668,13 @@ class XiaoMusic:
         # all_music 更新，重建 tag
         self.try_gen_all_music_tag()
 
-    def refresh_custom_play_list(self):
+    def _append_custom_play_list(self):
+        if not self.config.custom_play_list_json:
+            return
+
         try:
-            custom_play_list = self.get_custom_play_list()
-            for k, v in custom_play_list.items():
-                self.music_list[k] = list(v)
+            custom_play_list = json.loads(self.config.custom_play_list_json)
+            self.music_list["收藏"] = list(custom_play_list["收藏"])
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -701,19 +714,21 @@ class XiaoMusic:
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
-    async def analytics_task_daily(self):
-        while True:
-            await self.analytics.send_daily_event()
-            await asyncio.sleep(3600)
+    # [alic] remove analytics of google.
+    # async def analytics_task_daily(self):
+    #     while True:
+    #         await self.analytics.send_daily_event()
+    #         await asyncio.sleep(3600)
 
     async def run_forever(self):
         self.try_gen_all_music_tag()  # 事件循环开始后调用一次
         self.crontab.start()
-        await self.analytics.send_startup_event()
-        analytics_task = asyncio.create_task(self.analytics_task_daily())
-        assert (
-            analytics_task is not None
-        )  # to keep the reference to task, do not remove this
+        # [alic] remove analytics of google.
+        # await self.analytics.send_startup_event()
+        # analytics_task = asyncio.create_task(self.analytics_task_daily())
+        # assert (
+        #     analytics_task is not None
+        # )  # to keep the reference to task, do not remove this
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
@@ -1283,7 +1298,7 @@ class XiaoMusicDevice:
                     f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
                 )
             else:
-                self._play_list.sort(key=custom_sort_key)
+                self._play_list = sorted(self._play_list)
                 self.log.info(
                     f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
                 )
@@ -1429,7 +1444,9 @@ class XiaoMusicDevice:
             return
 
         self.log.info(f"【{name}】已经开始播放了")
-        await self.xiaomusic.analytics.send_play_event(name, sec)
+        # [alic] remove analytics of google and reminder frontend.
+        # await self.xiaomusic.analytics.send_play_event(name, sec)
+        await emit_message("playing", {"song": name})
 
         # 设置下一首歌曲的播放定时器
         if sec <= 1:
@@ -1533,7 +1550,13 @@ class XiaoMusicDevice:
 
         cmd = " ".join(sbp_args)
         self.log.info(f"download cmd: {cmd}")
-        self._download_proc = await asyncio.create_subprocess_exec(*sbp_args)
+        # [alic] add pipe to monitor output of download process.
+        self._download_proc = await asyncio.create_subprocess_exec(*sbp_args,
+                                                                   stdout=asyncio.subprocess.PIPE,
+                                                                   stderr=asyncio.subprocess.PIPE)
+        # Start monitoring
+        self.downloading_task = asyncio.create_task(self.monitor_download_status())
+        # [alic] end.
         await self.do_tts(f"正在下载歌曲{search_key}")
 
     # 继续播放被打断的歌曲
@@ -1630,6 +1653,7 @@ class XiaoMusicDevice:
         try:
             if not self.config.miio_tts_command:
                 self.log.debug("Call MiNAService tts.")
+                # [alic-test]
                 await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
             else:
                 self.log.debug("Call MiIOService tts.")
@@ -1657,6 +1681,7 @@ class XiaoMusicDevice:
         try:
             audio_id = await self._get_audio_id(name)
             if self.config.continue_play:
+                # [alic-test]
                 ret = await self.xiaomusic.mina_service.play_by_music_url(
                     device_id, url, _type=1, audio_id=audio_id
                 )
@@ -1675,6 +1700,7 @@ class XiaoMusicDevice:
                 self.log.info(
                     f"play_one_url play_by_url device_id:{device_id} ret:{ret} url:{url}"
                 )
+                ret = 0
         except Exception as e:
             self.log.exception(f"Execption {e}")
         return ret
@@ -1843,3 +1869,64 @@ class XiaoMusicDevice:
         for key in list(d):
             val = d.pop(key)
             val.cancel_all_timer()
+
+# [alic] OLD
+    # 手动发消息
+    def set_last_record(self, query):
+        self.last_record = {
+            "query": query,
+            "ctrl_panel": True,
+        }
+        self.new_record_event.set()
+
+
+    # 获取歌曲播放地址
+    def get_file_url(self, name):
+        filename = self.get_filename(name)
+        self.log.debug("get_file_url. name:%s, filename:%s", name, filename)
+        encoded_name = urllib.parse.quote(filename)
+        return f"http://{self.hostname}:{self.port}/{encoded_name}"
+        
+     # 下载歌曲
+    async def download_with_output(self, search_key, name):
+        if name == "":
+            name = search_key
+        self.log.info("download with output: search_key:%s name:%s", search_key, name)
+        if not self.xiaomusic.is_music_exist(name):
+            await self.download(search_key, name)
+            self.log.info("正在下载 %s", search_key + ":" + name)
+            await emit_message("downloading", f"正在下载 {name}")
+            await self._download_proc.wait()
+            # 把文件插入到播放列表里
+            await self.add_download_music(name)
+            await emit_message("downloading", f"添加播放列表 {name}")
+        else:
+            self.log.info("歌曲已经存在 %s", name)
+            await emit_message("downloading", f"歌曲已经存在 {name}")
+    # create tasks to monitor stdout and stderr.
+    async def  monitor_download_status(self):
+        self.log.debug(f"monitor download status now.")
+        if self.isdownloading():
+            stdout_task = asyncio.create_task(self.handle_stdout(self._download_proc.stdout))
+            stderr_task = asyncio.create_task(self.handle_stderr(self._download_proc.stderr))
+            await asyncio.gather(stdout_task, stderr_task)
+
+    async def handle_stdout(self, stdout):
+        while True:
+            line = await stdout.readline()
+            if line:
+                msg = line.decode().rstrip()
+                await emit_message("downloading", msg)
+                self.log.debug(f"downloading: {msg}")
+            else:
+                break
+
+    async def handle_stderr(self, stderr):
+        while True:
+            line = await stderr.readline()
+            if line:
+                msg = line.decode().rstrip()
+                await emit_message("downloading", msg)
+                self.log.debug(f"downloading: {msg}")
+            else:
+                break

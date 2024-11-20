@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+# [alic] read from res_loader import get_resource_path
+from xiaomusic.res_loader import get_resource_path
 from dataclasses import asdict, dataclass, field
 from typing import get_type_hints
 
@@ -117,7 +119,10 @@ class Config:
         "XIAOMUSIC_USE_MUSIC_AUDIO_ID", "1582971365183456177"
     )
     use_music_id: str = os.getenv("XIAOMUSIC_USE_MUSIC_ID", "355454500")
-    log_file: str = os.getenv("XIAOMUSIC_LOG_FILE", "/tmp/xiaomusic.txt")
+    log_file: str = os.getenv("XIAOMUSIC_LOG_FILE", "./xiaomusic.log")
+    # [alic] add log level from config file
+    log_level: str = os.getenv("XIAOMUSIC_LOG_LEVEL", "INFO")
+    uvicorn_log_level: str = os.getenv("UVICORN_LOG_LEVEL", "INFO")
     # 模糊搜索匹配的最低相似度阈值
     fuzzy_match_cutoff: float = float(os.getenv("XIAOMUSIC_FUZZY_MATCH_CUTOFF", "0.6"))
     # 开启模糊搜索
