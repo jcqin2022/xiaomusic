@@ -1512,7 +1512,7 @@ class XiaoMusicDevice:
         # Start monitoring
         self.downloading_task = asyncio.create_task(self.monitor_download_status())
         # [alic] end.
-        await self.do_tts(f"正在下载歌曲{search_key}")
+        # await self.do_tts(f"正在下载歌曲{search_key}")
 
     # 继续播放被打断的歌曲
     async def check_replay(self):

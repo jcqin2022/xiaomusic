@@ -134,8 +134,16 @@ case "$1" in
         echo -e "`date`:started xiaomusic:8090" >> $LOG_FILE
         popd
         ;;
+    stop)
+        echo "stop $NAME"
+        echo "existing instances:"
+        pgrep -a $NAME
+        echo "killing..."
+        pgrep $NAME | xargs kill -9
+        pgrep -a $NAME
+        ;;
     *)
-        echo "Usage: $0 {install|python|env|src|build|installer|deploy|run}"
+        echo "Usage: $0 {install|python|env|src|build|installer|deploy|run|stop}"
         exit 1
         ;;
 esac
