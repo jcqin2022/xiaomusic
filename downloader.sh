@@ -3,6 +3,7 @@
 ### BEGIN INFO
 # Goal: download video, mp3 from bilibili or yourtube.
 # 11/19/2024: init version.
+# 11/20/2024: ffmpeg issue is caused by its version not path, just re-install.
 ### END INFO
 
 #APP
@@ -37,6 +38,7 @@ FFMPEG_PATH="--ffmpeg-location"
 FFMPEG_PATH_VALUE="./ffmpeg/bin/"
 PLAY_LIST="--no-playlist"
 APP_BIN="yt-dlp"
+FFMPEG_BIN="$SRC_PATH/ffmpeg/bin/ffmpeg"
 
 #VIDEO_FORMAT="-f"
 #VIDEO_FORMAT_VALUE="'bv[ext=mp4]+ba[ext=best]'"
@@ -63,6 +65,15 @@ function check() {
         $APP_BIN --version
         echo "$APP_BIN is already installed."
     fi
+    if ! command -v $FFMPEG_BIN &> /dev/null; then
+        echo "ffmpeg is not installed."
+        install_dependency
+    fi
+}
+
+function install_dependency() {
+    echo "installing ffmpeg"
+    bash $SRC_PATH/install_dependencies.sh
 }
 
 function download_mp3() {
