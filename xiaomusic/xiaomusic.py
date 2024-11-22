@@ -1606,9 +1606,13 @@ class XiaoMusicDevice:
 
     async def text_to_speech(self, value):
         try:
+            # [alic-mute] start.
+            if self.config.verbose:
+                self.log.debug("text to speech is disabled in debug.")
+                return 0
+            # [alic-mute] end.
             if not self.config.miio_tts_command:
                 self.log.debug("Call MiNAService tts.")
-                # [alic-test]
                 await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
             else:
                 self.log.debug("Call MiIOService tts.")
@@ -1634,9 +1638,13 @@ class XiaoMusicDevice:
     async def play_one_url(self, device_id, url, name):
         ret = None
         try:
+            # [alic-mute] start.
+            if self.config.verbose:
+                self.log.debug("play url is disabled in debug.")
+                return 0
+            # [alic-mute] end.
             audio_id = await self._get_audio_id(name)
             if self.config.continue_play:
-                # [alic-test]
                 ret = await self.xiaomusic.mina_service.play_by_music_url(
                     device_id, url, _type=1, audio_id=audio_id
                 )
