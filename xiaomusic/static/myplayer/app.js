@@ -39,13 +39,18 @@ $(function(){
       console.log('Disconnected from WebSocket server');
   });
 
-  socket.on('response', function(data) {
-      $('#messages').append('<p>' + data.data + '</p>');
-  });
+  // socket.on('response', function(data) {
+  //     $('#messages').append('<p>' + data.data + '</p>');
+  // });
 
   socket.on('playing', function(data) {
     console.log('playing:' +  data.song);
     get_playing_music(g_did);
+  });
+
+  socket.on('status', function(data) {
+    console.log('status:' +  data.status);
+    $("#status").text(data.status);
   });
 
   socket.on('downloading', function(data) {
@@ -304,4 +309,92 @@ $(function(){
       listContainer.appendChild(newListItem);
   }
   // end function
+
+  // == player buttons
+  const playButtonPos = {
+    x: 200,
+    y: 373,
+    width: 132,
+    height: 132
+  };
+  const stopButtonPos = {
+      x: 0,
+      y: 370,
+      width: 130,
+      height: 130
+  };
+  const pauseButtonPos = {
+    x: 0,
+    y: 180,
+    width: 132,
+    height: 132
+  };
+  const preButtonPos = {
+      x: 420,
+      y: 0,
+      width: 130,
+      height: 130
+  };
+  const nextButtonPos = {
+    x: 420,
+    y: 370,
+    width: 130,
+    height: 130
+  };
+  const refreshButtonPos = {
+    x: 390,
+    y: 190,
+    width: 130,
+    height: 130
+  };
+  const listButtonPos = {
+    x: 200,
+    y: 0,
+    width: 130,
+    height: 130
+  };
+   
+  const canvas = $('#button-canvas')[0];
+  const ctx = canvas.getContext('2d');
+  const controlImage = $('#playerButtonsImg')[0];
+  function showButton(buttonPos, $button, cmd) {
+      canvas.width = buttonPos.width;
+      canvas.height = buttonPos.height;
+      ctx.drawImage(controlImage, buttonPos.x, buttonPos.y, buttonPos.width, buttonPos.height, 0, 0, buttonPos.width, buttonPos.height);
+      const dataURL = canvas.toDataURL();
+      $button.css('backgroundImage', `url(${dataURL})`);
+      $button.on("click", () => {
+        sendcmd(cmd);
+      });
+  }
+  function showButtonWithAction(buttonPos, $button, action) {
+    canvas.width = buttonPos.width;
+    canvas.height = buttonPos.height;
+    ctx.drawImage(controlImage, buttonPos.x, buttonPos.y, buttonPos.width, buttonPos.height, 0, 0, buttonPos.width, buttonPos.height);
+    const dataURL = canvas.toDataURL();
+    $button.css('backgroundImage', `url(${dataURL})`);
+    $button.on("click", () => {
+      action();
+    });
+  }
+  function refreshButton() {
+      showButton(stopButtonPos, $("#stopButton"), "停止播放");
+      showButton(playButtonPos, $("#playButton"), "播放歌曲");
+      showButton(pauseButtonPos, $("#pauseButton"), "暂停播放"); // test
+      showButton(preButtonPos, $("#preButton"), "上一首"); // test
+      showButton(nextButtonPos, $("#nextButton"), "下一首");
+      showButtonWithAction(refreshButtonPos, $("#refreshBtn"), () => {
+        build_music_list();
+      });
+      showButtonWithAction(listButtonPos, $("#listButton"), () => {
+        const listContainer = $("#playlistContainer")[0];
+        if (listContainer.style.display === 'none') {
+          listContainer.style.display = 'block';
+        } else {
+          listContainer.style.display = 'none';
+        }
+      });
+  }
+  refreshButton();
+  // == end
 });

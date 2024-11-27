@@ -17,6 +17,19 @@
         <img src="/static/myplayer/refresh.png" alt="刷新图标">
       </button>
     </div>
+    <div id="player-panel">
+      <div id="player_buttons_div">
+        <button id="playButton">播放</button>
+        <button id="pauseButton">暂停</button>
+        <button id="stopButton">停止</button>
+        <button id="preButton">上一</button>
+        <button id="nextButton">下一</button>
+        <button id="refreshBtn">下一</button>
+        <button id="listButton">下一</button>
+      </div>
+      <img id="playerButtonsImg" src="/static/myplayer/player_btns1.png" style="display:none;">
+      <canvas id="button-canvas" style="display:none;"></canvas>
+    </div>
     <div id="playlistContainer">
       <ul id="musicList">
           <!-- 歌曲条目将在这里添加 -->
@@ -26,6 +39,7 @@
       <div class="container">
         <div id="playering-music" class="text"></div>
       </div>
+      <div id="status" class="status-text">状态</div>
     </div>
     <hr>
     <div id="cmds">

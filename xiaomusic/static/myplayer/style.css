@@ -25,43 +25,6 @@ input,select {
   height: 40px;
 }
 
-.container{
-  width: 300px;
-  word-wrap: normal;
-  overflow: hidden;
-  display: inline-block;
-}
-@keyframes text-scroll {
-  0% {
-    left: 100%;
-  }
-  25% {
-    left: 50%;
-  }
-  50% {
-    left: 0%;
-  }
-  75% {
-    left: 50%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-.text {
-  white-space:initial;
-  text-wrap:wrap;
-  font-weight: bold;
-  position: relative;
-  animation: text-scroll 10s linear infinite;
-}
-.rows {
-  display: flex;
-  flex-direction: column;
-  margin-left: 20px;
-  margin-right: 20px;
-}
-
 .downloader{
   width: 400px;
   word-wrap: normal;
@@ -84,7 +47,7 @@ footer {
   padding-right: 20px;
   border: 1px solid #ddd;
   border-radius: 5px;
-  background-color: #f9f9f9;
+  background-color: #e6f5f0;
 }
 
 #musicList {
@@ -147,19 +110,70 @@ footer {
   width: 100%;
   height: 100%;
 }
+
 #statusBar {
   background-color: #333;
   color: white;
-  padding: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   align-items: center;
   margin-left: 10px;
   margin-right: 10px;
   width: 300px;
-  height: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
+  font-size: small;
+}
+
+.container{
+  width: 300px;
+  word-wrap: normal;
+  overflow: hidden;
+  display: inline-block;
+}
+@keyframes text-scroll {
+  0% {
+    left: 100%;
+  }
+  25% {
+    left: 50%;
+  }
+  50% {
+    left: 0%;
+  }
+  75% {
+    left: 50%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+.text {
+  white-space:initial;
+  text-wrap:wrap;
+  font-weight: bold;
+  position: relative;
+  animation: text-scroll 10s linear infinite;
+}
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.status-text {
+  white-space:initial;
+  text-wrap:wrap;
+  font-weight: bold;
+  position: left;
+  display:inline-block;
+  width: 100%;
 }
 
 .hidden-list-container {
@@ -210,3 +224,54 @@ footer {
   padding: 5px 10px;
   cursor: pointer;
 }
+
+#player-panel{
+  color: white;
+  padding-left: 5px;
+  padding-right: 5px;
+  display: inline-block;
+  background-color: lightpink;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-left: 10px;
+  margin-right: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 330px;
+  height: 46px;
+}
+
+#player_buttons_div {
+  display: inline-block;
+  margin: 0px;
+  padding: 0px;
+  background-color: transparent;
+  width: 100%;
+  height: 100%;
+  align-content: center;
+}
+
+#player_buttons_div button {
+  margin: 0px;
+  margin-left: 2px;
+  margin-right: 2px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  color:transparent;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 10px;
+  background-color: transparent;
+  background-size:cover;
+  background-repeat: no-repeat;
+}
+
+/* #playerButtonsImg {
+  padding: 10px;
+  width: 315px;
+  height: 46px;
+  background-color: transparent;
+} */

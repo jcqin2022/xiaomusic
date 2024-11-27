@@ -130,17 +130,18 @@ case "$1" in
     run)
         echo "run $NAME in backgound"
         pushd "$APP_PATH"
-        nohup "./$APP_BIN" > /dev/null 2>&1 &
+        sudo nohup "./$APP_BIN" > /dev/null 2>&1 &
         echo -e "`date`:started xiaomusic:8090" >> $LOG_FILE
+        sudo pgrep -a $NAME
         popd
         ;;
     stop)
         echo "stop $NAME"
         echo "existing instances:"
-        pgrep -a $NAME
+        sudo pgrep -a $NAME
         echo "killing..."
-        pgrep $NAME | xargs kill -9
-        pgrep -a $NAME
+        sudo pgrep $NAME | xargs kill -9
+        sudo pgrep -a $NAME
         ;;
     *)
         echo "Usage: $0 {install|python|env|src|build|installer|deploy|run|stop}"
