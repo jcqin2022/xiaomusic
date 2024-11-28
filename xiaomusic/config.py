@@ -243,7 +243,12 @@ class Config:
                 elif expected_type == dict[str, Device]:
                     converted_value = {}
                     for kk, vv in v.items():
-                        converted_value[kk] = Device(**vv)
+                        #[alic] add default value for play_type
+                        device = Device(**vv)
+                        if device.play_type not in [0, 1, 2]:
+                            device.play_type = 1
+                        #[alic] end.
+                        converted_value[kk] = device
                 else:
                     converted_value = expected_type(v)
                 return converted_value

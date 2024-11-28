@@ -4,28 +4,6 @@ $(function(){
   var g_songs = {};
   // end
 
-  $container=$("#cmds");
-  append_op_button_name("下一首");
-  append_op_button_name("全部循环");
-  append_op_button_name("停止播放");
-  append_op_button_name("单曲循环");
-  append_op_button_name("播放歌曲");
-  append_op_button_name("随机播放");
-
-  $container.append($("<hr>"));
-  append_op_button_name("10分钟后关机");
-  append_op_button_name("30分钟后关机");
-  append_op_button_name("60分钟后关机");
-
-  // pull setting and init device
-  $.get("/getsetting", function(data, status) {
-    console.log(data, status);
-    init_device(data);
-  });
-  // create music list
-  $musicList=$("#musicList");
-  build_music_list();
-
   // == websocket io
   socket = io({
     path: '/ws',
@@ -395,6 +373,31 @@ $(function(){
         }
       });
   }
-  refreshButton();
   // == end
+
+  // == initialize 
+  // $container=$("#cmds");
+  // append_op_button_name("下一首");
+  // append_op_button_name("全部循环");
+  // append_op_button_name("停止播放");
+  // append_op_button_name("单曲循环");
+  // append_op_button_name("播放歌曲");
+  // append_op_button_name("随机播放");
+
+  // $container.append($("<hr>"));
+  // append_op_button_name("10分钟后关机");
+  // append_op_button_name("30分钟后关机");
+  // append_op_button_name("60分钟后关机");
+  refreshButton();
+
+  // pull setting and init device
+  $.get("/getsetting", function(data, status) {
+    console.log(data, status);
+    init_device(data);
+  });
+  // create music list
+  $musicList=$("#musicList");
+  build_music_list();
+
+  // ==end initialize
 });
