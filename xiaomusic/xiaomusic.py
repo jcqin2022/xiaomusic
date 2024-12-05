@@ -608,7 +608,7 @@ class XiaoMusic:
                 (name, _) = os.path.splitext(filename)
                 self.all_music[name] = file
                 all_music_by_dir[dir_name][name] = True
-                self.log.debug(f"_gen_all_music_list {name}:{dir_name}:{file}")
+                #self.log.debug(f"_gen_all_music_list {name}:{dir_name}:{file}")
 
         # self.log.debug(self.all_music)
 
@@ -1134,7 +1134,7 @@ class XiaoMusic:
 
         self.init_config()
         debug_config = deepcopy_data_no_sensitive_info(self.config)
-        self.log.info(f"update_config_from_setting ok. data:{debug_config}")
+        #self.log.info(f"update_config_from_setting ok. data:{debug_config}")
 
         joined_keywords = "/".join(self.config.key_match_order)
         self.log.info(f"语音控制已启动, 用【{joined_keywords}】开头来控制")
@@ -1249,14 +1249,14 @@ class XiaoMusicDevice:
         if reorder:
             if self.device.play_type == PLAY_TYPE_RND:
                 random.shuffle(self._play_list)
-                self.log.info(
-                    f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
-                )
+                # self.log.info(
+                #     f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
+                # )
             else:
                 self._play_list = sorted(self._play_list)
-                self.log.info(
-                    f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
-                )
+                # self.log.info(
+                #     f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
+                # )
         else:
             self.log.info(
                 f"更新 {list_name} {list2str(self._play_list, self.config.verbose)}"
