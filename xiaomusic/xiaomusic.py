@@ -101,8 +101,8 @@ class XiaoMusic:
         # 启动统计
         #self.analytics = Analytics(self.log)
 
-        debug_config = deepcopy_data_no_sensitive_info(self.config)
-        self.log.info(f"Startup OK. {debug_config}")
+        # debug_config = deepcopy_data_no_sensitive_info(self.config)
+        # self.log.info(f"Startup OK. {debug_config}")
 
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
