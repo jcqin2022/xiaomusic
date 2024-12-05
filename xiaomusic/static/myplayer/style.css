@@ -20,9 +20,11 @@ label {
   width: 300px;
 }
 input,select {
-  margin: 10px;
-  width: 300px;
-  height: 40px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 90%;
+  max-width: 280px;
+  height: 30px;
 }
 
 .downloader{
@@ -31,11 +33,56 @@ input,select {
   display: inline-block;
 }
 
+.rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 footer {
   bottom: 0;
   width: 100%;
   text-align: center;
   padding: 10px 0;
+}
+
+ textarea{
+  margin-left: 5%;
+  margin-right: 5%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 90%;
+  max-width: 400px;
+  height: 200px;
+}
+
+.custom-checkbox {
+  display: inline-block;
+  margin: 10px;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle; /* 确保与标签垂直居中对齐 */
+}
+
+.checkbox-label {
+  display: inline-block;
+  width: 260px;
+  background-color: #fff;
+  border: 0px solid #ccc;
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+  vertical-align: middle; /* 确保与复选框垂直居中对齐 */
+  margin-left: 1px; /* 给复选框和标签之间一些距离，如果需要的话 */
+}
+
+.text {
+  margin: 10px;
+  width: 150px;
+  height: 50px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
 }
 
 /* styles.css */
@@ -153,7 +200,7 @@ footer {
     left: 100%;
   }
 }
-.text {
+.song-text {
   white-space:initial;
   text-wrap:wrap;
   font-weight: bold;

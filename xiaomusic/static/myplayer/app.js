@@ -60,6 +60,7 @@ $(function(){
 
   $("#volume").on('input', function () {
     var value = $(this).val();
+    $("#volume-value").text(value);
     $.ajax({
       type: "POST",
       url: "/setvolume",
@@ -115,6 +116,7 @@ $(function(){
     $.get(`/getvolume?did=${did}`, function(data, status) {
       console.log(data, status, data["volume"]);
       $("#volume").val(data.volume);
+      $("#volume-value").text(data.volume);
     });
 
     // 拉取版本
