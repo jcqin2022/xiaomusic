@@ -1,6 +1,6 @@
 [project]
 name = "xiaomusic"
-version = "0.3.44"
+version = "0.3.55"
 description = "Play Music with xiaomi AI speaker"
 authors = [
 {name = "涵曦", email = "im.hanxi@gmail.com"},
@@ -8,15 +8,15 @@ authors = [
 dependencies = [
     "rich>=13.6.0",
     "requests>=2.31.0",
-    "aiohttp>=3.8.6",
-    "miservice-fork>=2.7.0",
-    "mutagen>=1.47.0",
-    "yt-dlp>=2024.07.01",
     "flask[async]>=3.0.1",
     "waitress>=3.0.0",
     "flask-socketio>=5.3.6",
+    "aiohttp>=3.8.6",
+    "miservice-fork>=2.7.0",
+    "mutagen>=1.47.0",
+    "yt-dlp[default]>=2024.12.1.232904.dev0",
     "uvicorn>=0.30.1",
-    "fastapi>=0.111.0",
+    "fastapi>=0.115.4",
     "starlette>=0.37.2",
     "aiofiles>=24.1.0",
     "ga4mp>=2.0.4",
@@ -24,8 +24,9 @@ dependencies = [
     "opencc-python-reimplemented==0.1.7",
     "pillow>=10.4.0",
     "python-multipart>=0.0.12",
+    "requests>=2.32.3",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<=3.12"
 readme = "README.md"
 license = {text = "MIT"}
 

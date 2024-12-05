@@ -24,11 +24,12 @@ $(function(){
   socket.on('playing', function(data) {
     console.log('playing:' +  data.song);
     get_playing_music(g_did);
+    $("#status").text("播放中");
   });
 
   socket.on('status', function(data) {
-    console.log('status:' +  data.status);
-    $("#status").text(data.status);
+    console.log('status:' +  data);
+    $("#status").text(data);
   });
 
   socket.on('downloading', function(data) {

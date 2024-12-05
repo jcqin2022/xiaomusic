@@ -358,7 +358,7 @@ def get_random(length):
     return "".join(random.sample(string.ascii_letters + string.digits, length))
 
 
-# 深拷贝把敏感数据设置位*
+# 深拷贝把敏感数据设置为*
 def deepcopy_data_no_sensitive_info(data, fields_to_anonymize=None):
     if fields_to_anonymize is None:
         fields_to_anonymize = [
@@ -407,14 +407,6 @@ def no_padding(info):
     return 0
 
 
-def get_temp_dir(music_path: str):
-    # 指定临时文件的目录为 music_path 目录下的 tmp 文件夹
-    temp_dir = os.path.join(music_path, "tmp")
-    if not os.path.exists(temp_dir):
-        os.makedirs(temp_dir)  # 确保目录存在
-    return temp_dir
-
-
 def remove_id3_tags(input_file: str, config) -> str:
     audio = MP3(input_file, ID3=ID3)
 
@@ -426,7 +418,7 @@ def remove_id3_tags(input_file: str, config) -> str:
         return None
 
     music_path = config.music_path
-    temp_dir = get_temp_dir(music_path)
+    temp_dir = config.temp_dir
 
     # 构造新文件的路径
     out_file_name = os.path.splitext(os.path.basename(input_file))[0]
@@ -459,7 +451,7 @@ def remove_id3_tags(input_file: str, config) -> str:
 
 def convert_file_to_mp3(input_file: str, config) -> str:
     music_path = config.music_path
-    temp_dir = get_temp_dir(music_path)
+    temp_dir = config.temp_dir
 
     out_file_name = os.path.splitext(os.path.basename(input_file))[0]
     out_file_path = os.path.join(temp_dir, f"{out_file_name}.mp3")
@@ -526,6 +518,13 @@ def chinese_to_number(chinese):
     result = 0
     unit = 1
     num = 0
+    # 处理特殊情况：以"十"开头时，在前面加"一"
+    if chinese.startswith("十"):
+        chinese = "一" + chinese
+
+    # 如果只有一个字符且是单位，直接返回其值
+    if len(chinese) == 1 and chinese_to_arabic[chinese] >= 10:
+        return chinese_to_arabic[chinese]
     for char in reversed(chinese):
         if char in chinese_to_arabic:
             val = chinese_to_arabic[char]
@@ -536,8 +535,8 @@ def chinese_to_number(chinese):
                     unit *= val
             else:
                 num += val * unit
-        result += num
-        num = 0
+    result += num
+
     return result
 
 
@@ -595,6 +594,15 @@ def _to_utf8(v):
     elif isinstance(v, list):
         return "".join(str(item) for item in v)
     return str(v)
+
+
+def save_picture_by_base64(picture_base64_data, save_root, file_path):
+    try:
+        picture_data = base64.b64decode(picture_base64_data)
+    except (TypeError, ValueError) as e:
+        log.exception(f"Error decoding base64 data: {e}")
+        return None
+    return _save_picture(picture_data, save_root, file_path)
 
 
 def _save_picture(picture_data, save_root, file_path):
