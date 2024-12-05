@@ -96,7 +96,7 @@ case "$1" in
         echo "git clone $NAME"
         git clone git@github.com:jcqin2022/xiaomusic.git
         ;;
-    build)
+    compile)
         echo "build src for $NAME"
         if [ -n "$2" ]; then
             venv_name="$2"
@@ -113,7 +113,7 @@ case "$1" in
         pdm install
         deactivate
         ;;
-    installer)
+    build)
         echo "create installer for $NAME"
         source $ENV_PATH/bin/activate
         pyinstaller $SRC_PATH/$NAME.spec
@@ -144,7 +144,7 @@ case "$1" in
         sudo pgrep -a $NAME
         ;;
     *)
-        echo "Usage: $0 {install|python|env|src|build|installer|deploy|run|stop}"
+        echo "Usage: $0 {install|python|env|src|compile|build|deploy|run|stop}"
         exit 1
         ;;
 esac
