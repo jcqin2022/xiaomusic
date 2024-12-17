@@ -103,11 +103,14 @@ class XiaoMusic:
         # 更新设备列表
         self.update_devices()
 
+        # [alic] add main_task and remove analytics of google.
+        self.main_task = None
         # 启动统计
         #self.analytics = Analytics(self.log)
 
         # debug_config = deepcopy_data_no_sensitive_info(self.config)
         # self.log.info(f"Startup OK. {debug_config}")
+        # [alic] end.
 
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
@@ -1275,7 +1278,27 @@ class XiaoMusic:
 
     async def do_tts(self, did, value):
         return await self.devices[did].do_tts(value)
+    
+    # [alic] added methods for xiaomusic.
+    async def start_stop_main_task(self):
+        async def main_task_manager():
+            while True:
+                now = time.localtime()
+                start = self.config.start_hour
+                stop = self.config.stop_hour
+                if start <= now.tm_hour < stop:
+                    if not self.main_task or self.main_task.done():
+                        self.main_task = asyncio.create_task(self.run_forever())
+                        self.log.info("Target task started.")
+                else:
+                    if self.main_task and not self.main_task.done():
+                        self.main_task.cancel()
+                        self.log.info("Target task terminated.")
+                await asyncio.sleep(60)  # Check every minute
 
+        self.main_task = None
+        asyncio.create_task(main_task_manager())
+    # [alic] end.
 
 class XiaoMusicDevice:
     def __init__(self, xiaomusic: XiaoMusic, device: Device, group_name: str):
@@ -1939,7 +1962,7 @@ class XiaoMusicDevice:
             val = d.pop(key)
             val.cancel_all_timer()
 
-# [alic] OLD
+    # [alic] added methods for XiaoMusicDevice.
     # 手动发消息
     def set_last_record(self, query):
         self.last_record = {
@@ -1999,3 +2022,22 @@ class XiaoMusicDevice:
                 self.log.debug(f"downloading: {msg}")
             else:
                 break
+
+    async def start_stop_main_task(self):
+        async def main_task_manager():
+            while True:
+                now = time.localtime()
+                if 7 <= now.tm_hour < 22:
+                    if not self.main_task or self.main_task.done():
+                        self.main_task = asyncio.create_task(self.run_forever())
+                        self.log.info("Target task started.")
+                else:
+                    if self.main_task and not self.main_task.done():
+                        self.main_task.cancel()
+                        self.log.info("Target task terminated.")
+                await asyncio.sleep(60)  # Check every minute
+
+        self.main_task = None
+        asyncio.create_task(main_task_manager())
+    # [alic] end.
+    # [alic] added methods for xiaomusic.

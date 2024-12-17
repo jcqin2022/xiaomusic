@@ -335,10 +335,10 @@ $(function(){
     height: 130
   };
    
-  const canvas = $('#button-canvas')[0];
-  const ctx = canvas.getContext('2d');
-  const controlImage = $('#playerButtonsImg')[0];
   function showButton(buttonPos, $button, cmd) {
+      const canvas = $('#button-canvas')[0];
+      const ctx = canvas.getContext('2d');
+      const controlImage = $('#playerButtonsImg')[0];
       canvas.width = buttonPos.width;
       canvas.height = buttonPos.height;
       ctx.drawImage(controlImage, buttonPos.x, buttonPos.y, buttonPos.width, buttonPos.height, 0, 0, buttonPos.width, buttonPos.height);
@@ -349,6 +349,9 @@ $(function(){
       });
   }
   function showButtonWithAction(buttonPos, $button, action) {
+    const canvas = $('#button-canvas')[0];
+    const ctx = canvas.getContext('2d');
+    const controlImage = $('#playerButtonsImg')[0];
     canvas.width = buttonPos.width;
     canvas.height = buttonPos.height;
     ctx.drawImage(controlImage, buttonPos.x, buttonPos.y, buttonPos.width, buttonPos.height, 0, 0, buttonPos.width, buttonPos.height);

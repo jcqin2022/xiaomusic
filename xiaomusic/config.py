@@ -153,6 +153,9 @@ class Config:
     # [alic] add log level from config file
     log_level: str = os.getenv("XIAOMUSIC_LOG_LEVEL", "INFO")
     uvicorn_log_level: str = os.getenv("UVICORN_LOG_LEVEL", "INFO")
+    start_hour:int = int(os.getenv("XIAOMUSIC_START_HOUR", "8"))
+    stop_hour:int = int(os.getenv("XIAOMUSIC_START_HOUR", "22"))
+    # [alic] end.
     # 模糊搜索匹配的最低相似度阈值
     fuzzy_match_cutoff: float = float(os.getenv("XIAOMUSIC_FUZZY_MATCH_CUTOFF", "0.6"))
     # 开启模糊搜索
