@@ -1282,18 +1282,19 @@ class XiaoMusic:
     # [alic] added methods for xiaomusic.
     async def start_stop_main_task(self):
         async def main_task_manager():
+            start = self.config.start_hour
+            stop = self.config.stop_hour
+            self.log.info("Service task will run between %d and %d.", start, stop)
             while True:
                 now = time.localtime()
-                start = self.config.start_hour
-                stop = self.config.stop_hour
                 if start <= now.tm_hour < stop:
                     if not self.main_task or self.main_task.done():
                         self.main_task = asyncio.create_task(self.run_forever())
-                        self.log.info("Target task started.")
+                        self.log.info("Service task started.")
                 else:
                     if self.main_task and not self.main_task.done():
                         self.main_task.cancel()
-                        self.log.info("Target task terminated.")
+                        self.log.info("Service task terminated.")
                 await asyncio.sleep(60)  # Check every minute
 
         self.main_task = None
