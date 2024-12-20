@@ -325,8 +325,13 @@ class XiaoMusic:
                 )
                 # self.log.debug(f"url:{url} device_id:{device_id} hardware:{hardware}")
                 r = await session.get(url, timeout=timeout, cookies=cookies)
+                raise ValueError("An error occurred")
             except Exception as e:
-                self.log.exception(f"Execption {e}")
+                # [alic] add debug for network issue.
+                # self.log.exception(f"Execption {e}")
+                self.log.debug(f"Execption {e}")
+                asyncio.sleep(30)
+                # [alic] end.
                 continue
             try:
                 data = await r.json()
