@@ -329,7 +329,7 @@ class XiaoMusic:
             except Exception as e:
                 # [alic] add debug for network issue.
                 # self.log.exception(f"Execption {e}")
-                self.log.debug(f"Execption {e}")
+                self.log.debug(f"Execption {e} and sleep 30 seconds.")
                 asyncio.sleep(30)
                 # [alic] end.
                 continue
