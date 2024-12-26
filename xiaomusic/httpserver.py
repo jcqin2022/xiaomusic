@@ -55,8 +55,7 @@ log = None
 @asynccontextmanager
 async def app_lifespan(app):
     if xiaomusic is not None:
-        # asyncio.create_task(xiaomusic.run_forever())
-        asyncio.create_task(xiaomusic.start_stop_main_task())
+        asyncio.create_task(xiaomusic.run_forever())
     try:
         yield
     except Exception as e:

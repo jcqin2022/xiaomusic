@@ -103,8 +103,8 @@ class XiaoMusic:
         # 更新设备列表
         self.update_devices()
 
-        # [alic] add main_task and remove analytics of google.
-        self.main_task = None
+        # [alic] add pull task property and remove analytics of google.
+        self.pull_task = None
         # 启动统计
         #self.analytics = Analytics(self.log)
 
@@ -178,43 +178,46 @@ class XiaoMusic:
         self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
 
     async def poll_latest_ask(self):
-        async with ClientSession() as session:
-            while True:
-                # [alic] disable frequent debug message.
-                #self.log.debug(
-                #    f"Listening new message, timestamp: {self.last_timestamp}"
-                #)
-                session._cookie_jar = self.cookie_jar
+        try:
+            async with ClientSession() as session:
+                while True:
+                    # [alic] disable frequent debug message.
+                    #self.log.debug(
+                    #    f"Listening new message, timestamp: {self.last_timestamp}"
+                    #)
+                    session._cookie_jar = self.cookie_jar
 
-                # 拉取所有音箱的对话记录
-                tasks = []
-                for device_id in self.device_id_did:
-                    # 首次用当前时间初始化
-                    did = self.get_did(device_id)
-                    if did not in self.last_timestamp:
-                        self.last_timestamp[did] = int(time.time() * 1000)
+                    # 拉取所有音箱的对话记录
+                    tasks = []
+                    for device_id in self.device_id_did:
+                        # 首次用当前时间初始化
+                        did = self.get_did(device_id)
+                        if did not in self.last_timestamp:
+                            self.last_timestamp[did] = int(time.time() * 1000)
 
-                    hardware = self.get_hardward(device_id)
-                    if (hardware in GET_ASK_BY_MINA) or self.config.get_ask_by_mina:
-                        tasks.append(self.get_latest_ask_by_mina(device_id))
+                        hardware = self.get_hardward(device_id)
+                        if (hardware in GET_ASK_BY_MINA) or self.config.get_ask_by_mina:
+                            tasks.append(self.get_latest_ask_by_mina(device_id))
+                        else:
+                            tasks.append(
+                                self.get_latest_ask_from_xiaoai(session, device_id)
+                            )
+                    await asyncio.gather(*tasks)
+
+                    start = time.perf_counter()
+                    await self.polling_event.wait()
+                    if self.config.pull_ask_sec <= 1:
+                        if (d := time.perf_counter() - start) < 1:
+                            await asyncio.sleep(1 - d)
                     else:
-                        tasks.append(
-                            self.get_latest_ask_from_xiaoai(session, device_id)
-                        )
-                await asyncio.gather(*tasks)
-
-                start = time.perf_counter()
-                await self.polling_event.wait()
-                if self.config.pull_ask_sec <= 1:
-                    if (d := time.perf_counter() - start) < 1:
-                        await asyncio.sleep(1 - d)
-                else:
-                    sleep_sec = 0
-                    while True:
-                        await asyncio.sleep(1)
-                        sleep_sec = sleep_sec + 1
-                        if sleep_sec >= self.config.pull_ask_sec:
-                            break
+                        sleep_sec = 0
+                        while True:
+                            await asyncio.sleep(1)
+                            sleep_sec = sleep_sec + 1
+                            if sleep_sec >= self.config.pull_ask_sec:
+                                break
+        except asyncio.CancelledError:
+            self.log.info("pull task is terminated")
 
     async def init_all_data(self, session):
         await self.login_miboy(session)
@@ -325,14 +328,14 @@ class XiaoMusic:
                 )
                 # self.log.debug(f"url:{url} device_id:{device_id} hardware:{hardware}")
                 r = await session.get(url, timeout=timeout, cookies=cookies)
-                raise ValueError("An error occurred")
             except Exception as e:
                 # [alic] add debug for network issue.
                 # self.log.exception(f"Execption {e}")
                 self.log.debug(f"Execption {e} and sleep 30 seconds.")
                 asyncio.sleep(30)
-                # [alic] end.
                 continue
+                # [alic] end.
+
             try:
                 data = await r.json()
             except Exception as e:
@@ -765,7 +768,7 @@ class XiaoMusic:
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
-            task = asyncio.create_task(self.poll_latest_ask())
+            task = asyncio.create_task(self.start_stop_pull_task())
             assert task is not None  # to keep the reference to task, do not remove this
             while True:
                 self.polling_event.set()
@@ -782,6 +785,7 @@ class XiaoMusic:
                     answer = answers[0].get("tts", {}).get("text", "").strip()
                     await self.reset_timer_when_answer(len(answer), did)
                     self.log.debug(f"query:{query} did:{did} answer:{answer}")
+        
 
     # 匹配命令
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
@@ -1285,26 +1289,38 @@ class XiaoMusic:
         return await self.devices[did].do_tts(value)
     
     # [alic] added methods for xiaomusic.
-    async def start_stop_main_task(self):
-        async def main_task_manager():
-            start = self.config.start_hour
-            stop = self.config.stop_hour
-            self.log.info("Service task will run between %d and %d.", start, stop)
-            while True:
-                now = time.localtime()
-                if start <= now.tm_hour < stop:
-                    if not self.main_task or self.main_task.done():
-                        self.main_task = asyncio.create_task(self.run_forever())
-                        self.log.info("Service task started.")
-                else:
-                    if self.main_task and not self.main_task.done():
-                        self.main_task.cancel()
-                        self.log.info("Service task terminated.")
-                await asyncio.sleep(60)  # Check every minute
-
-        self.main_task = None
-        asyncio.create_task(main_task_manager())
-    # [alic] end.
+    async def start_stop_pull_task(self):
+        start = self.config.start_hour
+        stop = self.config.stop_hour
+        current = 0
+        self.log.info("Pull task will run between %d and %d.", start, stop)
+        while True:
+            now = time.localtime()
+            current = now.tm_hour
+            # current += 1 # debug
+            self.log.info("Pull task manager: current=%d, done=%s", current, self.pull_task.done() if self.pull_task else None)
+            if start <= current < stop:
+                if not self.pull_task or self.pull_task.done():
+                    self.pull_task = asyncio.create_task(self.poll_latest_ask())
+                    self.log.info("Pull task started.")
+            else:
+                if self.pull_task and not self.pull_task.done():
+                    tries = 0
+                    while not self.pull_task.done():
+                        if tries >= 5:
+                            break
+                        self.pull_task.cancel()
+                        tries += 1
+                        await asyncio.sleep(2)
+                    self.log.info("Pull task terminated in %d tries. done=%s", tries, self.pull_task.done())
+                    self.pull_task = None
+            await asyncio.sleep(60)  # Check every minute        
+            # debug code
+            # if current >= 24:
+            #     current = 6
+            # await asyncio.sleep(5)
+            # end debug
+    # [alic] methods end.
 
 class XiaoMusicDevice:
     def __init__(self, xiaomusic: XiaoMusic, device: Device, group_name: str):
@@ -2028,22 +2044,4 @@ class XiaoMusicDevice:
                 self.log.debug(f"downloading: {msg}")
             else:
                 break
-
-    async def start_stop_main_task(self):
-        async def main_task_manager():
-            while True:
-                now = time.localtime()
-                if 7 <= now.tm_hour < 22:
-                    if not self.main_task or self.main_task.done():
-                        self.main_task = asyncio.create_task(self.run_forever())
-                        self.log.info("Target task started.")
-                else:
-                    if self.main_task and not self.main_task.done():
-                        self.main_task.cancel()
-                        self.log.info("Target task terminated.")
-                await asyncio.sleep(60)  # Check every minute
-
-        self.main_task = None
-        asyncio.create_task(main_task_manager())
-    # [alic] end.
-    # [alic] added methods for xiaomusic.
+    # [alic] end added methods for XiaoMusicDevice.

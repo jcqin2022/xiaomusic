@@ -111,3 +111,7 @@ class Crontab:
             self.log.info("crontab reload_config ok")
         except Exception as e:
             self.log.exception(f"Execption {e}")
+    #[alic] add stop
+    def stop(self):
+        self.scheduler.shutdown()
+    #[alic] add end
