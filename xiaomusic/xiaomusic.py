@@ -1298,7 +1298,7 @@ class XiaoMusic:
             now = time.localtime()
             current = now.tm_hour
             # current += 1 # debug
-            self.log.info("Pull task manager: current=%d, done=%s", current, self.pull_task.done() if self.pull_task else None)
+            # self.log.info("Pull task manager: current=%d, done=%s", current, self.pull_task.done() if self.pull_task else None)
             if start <= current < stop:
                 if not self.pull_task or self.pull_task.done():
                     self.pull_task = asyncio.create_task(self.poll_latest_ask())
