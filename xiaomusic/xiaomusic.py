@@ -14,6 +14,8 @@ from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
 # [alic] support websocket IO.
 from xiaomusic.socket import emit_message
+from broker.monitor import Monitor
+# [alic] end.
 from pathlib import Path
 
 from aiohttp import ClientSession, ClientTimeout
@@ -110,6 +112,7 @@ class XiaoMusic:
 
         # debug_config = deepcopy_data_no_sensitive_info(self.config)
         # self.log.info(f"Startup OK. {debug_config}")
+        self.monitor = Monitor(self.config, self.log)
         # [alic] end.
 
         if self.config.conf_path == self.music_path:
@@ -768,8 +771,12 @@ class XiaoMusic:
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
+            # [alic] update task operations here.
             task = asyncio.create_task(self.start_stop_pull_task())
             assert task is not None  # to keep the reference to task, do not remove this
+            monitor_task = asyncio.create_task(self.start_stop_monitor_task())
+            assert monitor_task is not None  # to keep the reference to task, do not remove this
+            # [alic] end.
             while True:
                 self.polling_event.set()
                 await self.new_record_event.wait()
@@ -1320,6 +1327,14 @@ class XiaoMusic:
             #     current = 6
             # await asyncio.sleep(5)
             # end debug
+    
+    async def start_stop_monitor_task(self):
+        start = self.config.start_hour
+        stop = self.config.stop_hour
+        self.log.info("Monitor task will run between %d and %d.", start, stop)
+        await asyncio.sleep(1)
+        self.monitor.run_start()
+        self.log.info("Monitor task quit.")
     # [alic] methods end.
 
 class XiaoMusicDevice:
