@@ -4,6 +4,7 @@ import paho.mqtt.client as mqtt
 import broker.mqttdevice as MqttDevice
 import xiaomusic.config as Config
 import logging
+from xiaomusic.socket import emit_message
 
 class Monitor:
     def __init__(self, config, log):
@@ -51,3 +52,10 @@ class Monitor:
     def print_offline_devices(self):
         offline_devices = [name for name, device in self.devices if not device.online]
         self.log.info("Offline devices:", offline_devices)
+
+    async def send_message(self, msg):
+        await emit_message('monitor', msg)
+    
+    async def handle_message(self, msg):
+        self.log.debug(f"Received message: {msg}")
+        await self.send_message(msg)

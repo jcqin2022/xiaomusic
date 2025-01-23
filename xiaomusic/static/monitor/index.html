@@ -5,6 +5,8 @@
     <title>小爱音箱操控面板</title>
     <script src="/static/monitor/jquery-3.7.1.min.js"></script>
     <script src="/static/monitor/socket.io.min.js"></script>
+    <script src="/static/monitor/paho-mqtt-min.js"></script>
+    <script src="/static/monitor/monitor.js"></script>
     <script src="/static/monitor/app.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/monitor/style.css">
   </head>
@@ -31,11 +33,16 @@
       <canvas id="button-canvas" style="display:none;"></canvas>
     </div>
     <div id="playlistContainer">
-      <table id="musicList" border="1">
-        <tr>
-          <th>device</th>
-          <th>status</th>
-        </tr>
+      <table id="deviceList">
+        <thead>
+          <tr>
+              <th>设备名称</th>
+              <th>IP</th>
+              <th>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
       </table>
     </div>
     <div id="statusBar">

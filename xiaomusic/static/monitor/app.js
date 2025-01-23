@@ -1,7 +1,12 @@
+
+// Ensure the file defining monitorDevice is included
+// <script src="path/to/monitorDevice.js"></script>
+
 $(function(){
   // global variable
   var g_did = "";
   var g_songs = {};
+  var g_monitor = null;
   // end
 
   // == websocket io
@@ -161,20 +166,20 @@ $(function(){
     $container.append($button);
   }
 
-  function build_music_list(){
+  function build_device_list(){
     $.get("/musiclist", function(data, status) {
-      console.log(`build music list: ${data}, ${status}`);
+      console.log(`build device list: ${data}, ${status}`);
       $.each(data, function(key, value) {
         let cnt = value.length;
         if (key === "所有歌曲") {
           g_songs = value;
         }
       });
-      renderPlaylist();
+      render_device_list();
     });
   }
   
-  function renderPlaylist() {
+  function render_device_list() {
       g_songs.forEach((song, index) => {
           let tr = document.createElement('tr');
           let th = document.createElement('th');
@@ -182,10 +187,14 @@ $(function(){
           th.dataset.index = index;
           tr.appendChild(th);
           th = document.createElement('th');
+          th.textContent = `127.0.0.1`;
+          th.dataset.index = index;
+          tr.appendChild(th);
+          th = document.createElement('th');
           th.textContent = `offline`;
           th.dataset.index = index;
           tr.appendChild(th);
-          let tbody = musicList.getElementsByTagName('tbody');
+          let tbody = deviceList.getElementsByTagName('tbody');
           tbody[0].appendChild(tr);
       });
   }
@@ -204,10 +213,10 @@ $(function(){
       if (currentPlaying) {
           currentPlaying.classList.remove('playing');
       }
-      var cur = musicList.children[index];
+      var cur = deviceList.children[index];
       cur.classList.add('playing');
       setTimeout(() => {
-        scrollToChild(musicList, cur);
+        scrollToChild(deviceList, cur);
       }, 500);
   }
 
@@ -336,7 +345,7 @@ $(function(){
       showButton(preButtonPos, $("#preButton"), "上一首"); // test
       showButton(nextButtonPos, $("#nextButton"), "下一首");
       showButtonWithAction(refreshButtonPos, $("#refreshBtn"), () => {
-        build_music_list();
+        build_device_list();
       });
       showButtonWithAction(listButtonPos, $("#listButton"), () => {
         const listContainer = $("#playlistContainer")[0];
@@ -350,28 +359,17 @@ $(function(){
   // == end
 
   // == initialize 
-  // $container=$("#cmds");
-  // append_op_button_name("下一首");
-  // append_op_button_name("全部循环");
-  // append_op_button_name("停止播放");
-  // append_op_button_name("单曲循环");
-  // append_op_button_name("播放歌曲");
-  // append_op_button_name("随机播放");
-
-  // $container.append($("<hr>"));
-  // append_op_button_name("10分钟后关机");
-  // append_op_button_name("30分钟后关机");
-  // append_op_button_name("60分钟后关机");
   refreshButton();
-
   // pull setting and init device
   $.get("/getsetting", function(data, status) {
     console.log(data, status);
     init_device(data);
   });
-  // create music list
-  $musicList=$("#musicList");
-  build_music_list();
-
+  // create device list
+  $deviceList=$("#deviceList");
+  build_device_list();
+  // init monitor device
+  g_monitor = $.fn.monitorDevice("127.0.0.1", 8090, "myClientID");
+  g_monitor.connect();
   // ==end initialize
 });

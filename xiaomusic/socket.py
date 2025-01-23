@@ -1,6 +1,8 @@
 # New server: Uvicorn(ASGI server) + FastAPI(Web framework)
 # [alic] Support socket IO on fast api
 import socketio
+# from broker.monitor import Monitor
+# from xiaomusic.xiaomusic import XiaoMusic
 # from xiaomusic.httpserver import app
 
 clients_sid = {}
@@ -32,6 +34,12 @@ def handle_disconnect(sid):
 async def handle_message(sid, data):
     log.debug(f'Received message from {sid}: {data}')
     await sio.emit('response', data, room=sid)
+
+@sio.on('monitor')
+async def handle_message(sid, data):
+    log.debug(f'Received monitor from {sid}: {data}')
+    if xiaomusic is not None and xiaomusic.monitor is not None:
+        await xiaomusic.monitor.handle_message(data)
     
 async def emit_message(message, data):
     await sio.emit(message, data)

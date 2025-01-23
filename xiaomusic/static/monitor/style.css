@@ -87,44 +87,85 @@ footer {
 
 /* styles.css */
 #playlistContainer {
-  width: 300px;
+  width: 320px;
   margin-left: 10px;
   margin-right: 10px;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
   background-color: #e6f5f0;
 }
 
-#musicList {
-  list-style-type: none;
+#deviceList {
   padding: 0px;
-  max-height: 260px;
   height: 260px;
   overflow-y: auto;
   margin-top: 5px;
-  margin-bottom: 5px;
+  border-collapse: collapse;
+  margin-bottom: 20px;
 }
 
-#musicList li {
-  padding: 10px;
-  cursor: pointer;
+#deviceList thead {
+  background-color: #007bff;
+  color: #fff;
   font-size:large;
-  border-bottom: 1px solid #ddd;
-  transition: background-color 0.3s, color 0.3s;
 }
 
-#musicList li:hover {
+#deviceList tbody th, td {
+  padding: 5px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+#deviceList th:first-child, #deviceList td:first-child {
+  width: 100px;
+}
+#deviceList th:nth-child(2), #deviceList td:nth-child(2) {
+  width: 120px;
+}
+#deviceList th:last-child, #deviceList td:last-child {
+  width: 60px;
+}
+
+#deviceList tbody th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+#deviceList tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+#deviceList tbody tr:hover {
   background-color: #f2f2f2; /* 高亮背景色 */
   color: #333; /* 高亮文字颜色 */
   transform: scale(1.02); /* 缩放效果 */
   transition: transform 0.3s ease-in-out; /* 缩放过渡效果 */
 }
 
-#musicList .playing {
-  background-color: #cce8df;
-  animation: scrollHighlight 5s linear infinite;
+@media screen and (max-width: 600px) {
+  #deviceList {
+      display: block;
+      overflow-x: auto;
+  }
+  
+  #deviceList th,
+  #deviceList td {
+      display: block;
+      text-align: right;
+      border: none;
+      padding-left: 50%;
+      position: relative;
+  }
+  
+  #deviceList td:before {
+      content: attr(data-label);
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+      text-transform: uppercase;
+  }
 }
 
 @keyframes scrollHighlight {
