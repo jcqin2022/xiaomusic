@@ -25,7 +25,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+*_bak/
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -110,6 +110,8 @@ ipython_config.py
 .pdm.toml
 .pdm-python
 .pdm-build/
+pdm.lock
+./pdm.lock
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
@@ -167,3 +169,8 @@ test.sh
 
 # Configuration
 config.json
+conf
+setting.json
+.DS_Store
+cache
+tmp/
