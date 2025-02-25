@@ -18,11 +18,20 @@
 #         pyenv global 3.10
 # https://medium.com/@AgnesMbiti/creating-a-python-virtual-environment-on-ubuntu-22-04-5efc173ce655
 
-# == python3 for ubuntu - Beikeyun
-# a. sudo apt-get install python3.10-venv
+# == python3 for ubuntu - Beikeyun, ubuntu 24.04
+# a. sudo apt-get install python3.10/12-venv
 # b. sudo apt install python3-pip -y
 # c. Python3 --version or Pip3 --version
-# d. sudo apt-get install gcc python3-dev
+# d. python3 -m venv .venv (project folder)
+# e. source .venv/bin/activate
+# f. pip install pyinstaller pdm
+# g. deactivate
+# f. sudo apt-get install gcc python3-dev
+
+# == pdm
+# pdm init
+# pdm install
+# pdm add openai
 
 #APP
 HOME_BASE="/home/alic"
