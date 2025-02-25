@@ -3,10 +3,18 @@ from pathlib import Path
 
 import edge_tts
 
-from xiaomusic.config import EDGE_TTS_DICT
-from ai.tts.base import AudioFileTTS
+from .base import AudioFileTTS
 from xiaomusic.utils import find_key_by_partial_string
 
+
+EDGE_TTS_DICT = {
+    "用英语": "en-US-AriaNeural",
+    "用日语": "ja-JP-NanamiNeural",
+    "用法语": "fr-BE-CharlineNeural",
+    "用韩语": "ko-KR-SunHiNeural",
+    "用德语": "de-AT-JonasNeural",
+    # add more here
+}
 
 class EdgeTTS(AudioFileTTS):
     default_voice = "zh-CN-XiaoxiaoNeural"

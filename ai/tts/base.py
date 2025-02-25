@@ -14,8 +14,6 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import TYPE_CHECKING, AsyncIterator
 
-from xiaomusic.utils import get_hostname
-
 if TYPE_CHECKING:
     from typing import TypeVar
 
@@ -125,7 +123,7 @@ class AudioFileTTS(TTS):
 
     def _start_http_server(self):
         # set the port range
-        port_range = range(8050, 8090)
+        port_range = range(8050, 8060)
         # get a random port from the range
         self.port = int(os.getenv("XIAOGPT_PORT", random.choice(port_range)))
         # create the server
@@ -136,5 +134,5 @@ class AudioFileTTS(TTS):
         server_thread.daemon = True
         server_thread.start()
 
-        self.hostname = get_hostname()
+        self.hostname = self.config.hostname
         logger.info(f"Serving on {self.hostname}:{self.port}")

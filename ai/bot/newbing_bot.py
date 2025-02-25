@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from bot.base_bot import BaseBot, ChatHistoryMixin
+from .base_bot import BaseBot, ChatHistoryMixin
 from xiaomusic.utils import split_sentences
 
 _reference_link_re = re.compile(r"\[\d+\]: .+?\n+")

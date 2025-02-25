@@ -6,12 +6,17 @@ from typing import TYPE_CHECKING, ClassVar
 import httpx
 from rich import print
 
-from base_bot import BaseBot, ChatHistoryMixin
+from .base_bot import BaseBot, ChatHistoryMixin
 from xiaomusic.utils import split_sentences
 
 if TYPE_CHECKING:
     import openai
 
+#gpt-4o (version:2024-08-06)
+DEPLOYMENT_NAME = "gpt-4o"
+API_KEY = "fDZKz5jA3B1YozrixDFi8DTAic5XcdTW6pjwepPjXwrTL3PbfndLJQQJ99BBACi0881XJ3w3AAAAACOGDwd7"
+AZURE_ENDPOINT = "https://jcqin-m7cp47wm-japaneast.cognitiveservices.azure.com/" 
+API_VERSION = "2024-08-06"
 
 @dataclasses.dataclass
 class ChatGPTBot(ChatHistoryMixin, BaseBot):
@@ -26,12 +31,12 @@ class ChatGPTBot(ChatHistoryMixin, BaseBot):
     def _make_openai_client(self, sess: httpx.AsyncClient) -> openai.AsyncOpenAI:
         import openai
 
-        if self.api_base and self.api_base.rstrip("/").endswith("openai.azure.com"):
+        if self.api_base and self.api_base.rstrip("/").endswith(".azure.com"):
             return openai.AsyncAzureOpenAI(
-                api_key=self.openai_key,
-                azure_endpoint=self.api_base,
-                api_version="2024-02-15-preview",
-                azure_deployment=self.deployment_id,
+                api_key=API_KEY, #self.openai_key,
+                azure_endpoint=AZURE_ENDPOINT, #self.api_base,
+                api_version=API_VERSION, #"2024-02-15-preview",
+                azure_deployment=DEPLOYMENT_NAME, #self.deployment_id,
                 http_client=sess,
             )
         else:

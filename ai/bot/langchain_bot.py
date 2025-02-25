@@ -6,9 +6,9 @@ import os
 from langchain.memory import ConversationBufferWindowMemory
 from rich import print
 
-from bot.base_bot import BaseBot
-from langchain.callbacks import AsyncIteratorCallbackHandler
-from langchain.chain import agent_search
+from .base_bot import BaseBot
+from ..langchain.callbacks import AsyncIteratorCallbackHandler
+from ..langchain.chain import agent_search
 from xiaomusic.utils import split_sentences
 
 

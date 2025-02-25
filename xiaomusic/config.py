@@ -164,6 +164,9 @@ class Config:
     tts: str = os.getenv("TTS", "chatgpt")
     stream: bool = False
     gpt_options: str = os.getenv("GPT_OPTIONS", "")
+    openai_key: str = os.getenv("OPENAI_KEY", "")
+    api_base: str = os.getenv("API_BASE", "")
+    deployment_id: str = os.getenv("DEPLOYMENT_ID", "")
     # [alic] end.
     # 模糊搜索匹配的最低相似度阈值
     fuzzy_match_cutoff: float = float(os.getenv("XIAOMUSIC_FUZZY_MATCH_CUTOFF", "0.6"))

@@ -782,6 +782,7 @@ class XiaoMusic:
             assert task is not None  # to keep the reference to task, do not remove this
             monitor_task = asyncio.create_task(self.start_stop_monitor_task())
             assert monitor_task is not None  # to keep the reference to task, do not remove this
+            await self.do_ask_gpt("77999771", "hello")
             # [alic] end.
             while True:
                 self.polling_event.set()
@@ -1363,6 +1364,9 @@ class XiaoMusic:
     async def do_check_talking(self, did, query):
         return await self.devices[did].do_check_talking(query)
     
+    async def do_ask_gpt(self, did, query):
+        return await self.devices[did].ask_gpt(query)
+    
     # [alic] methods end.
 
 class XiaoMusicDevice:
@@ -1393,7 +1397,7 @@ class XiaoMusicDevice:
 
         #alic start
         self.in_conversation = False
-        self.chatbot: BaseBot = get_bot()
+        self.chatbot: BaseBot = get_bot(self.config)
         #alic end
 
     @property
@@ -2147,7 +2151,7 @@ class XiaoMusicDevice:
         return await miio_command(
             self.xiaomusic.miio_service,
             self.device_id,
-            f"{self.config.wakeup_command} {"小爱同学"} 0",
+            f'{self.config.wakeup_command} "小爱同学" 0',
         )
     
     async def ask_gpt(self, query: str) -> AsyncIterator[str]:

@@ -7,7 +7,7 @@ from typing import Any
 
 from rich import print
 
-from bot.base_bot import BaseBot, ChatHistoryMixin
+from .base_bot import BaseBot, ChatHistoryMixin
 
 
 class QwenBot(ChatHistoryMixin, BaseBot):
