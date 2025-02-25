@@ -61,6 +61,8 @@ def default_user_key_word_dict():
     return {
         "测试自定义口令": 'exec#code1("hello")',
         "测试链接": 'exec#httpget("https://github.com/hanxi/xiaomusic")',
+        "开始聊天": 'start_conversation',
+        "结束聊天": 'stop_conversation',
     }
 
 
@@ -108,6 +110,7 @@ class Config:
     password: str = os.getenv("MI_PASS", "")
     mi_did: str = os.getenv("MI_DID", "")  # 逗号分割支持多设备
     miio_tts_command: str = os.getenv("MIIO_TTS_CMD", "")
+    wakeup_command: str = os.getenv("MIIO_WAKEUP_CMD", "")
     cookie: str = ""
     verbose: bool = os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true"
     music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
@@ -156,6 +159,11 @@ class Config:
     start_hour:int = int(os.getenv("XIAOMUSIC_START_HOUR", "8"))
     stop_hour:int = int(os.getenv("XIAOMUSIC_START_HOUR", "22"))
     mqtt_port: int = int(os.getenv("MQTT_PORT", "11883"))  # 监听端口
+    wakeup_command: str = os.getenv("MIIO_WAKEUP_CMD", "5-1")
+    bot: str = os.getenv("BOT", "chatgptapi")
+    tts: str = os.getenv("TTS", "chatgpt")
+    stream: bool = False
+    gpt_options: str = os.getenv("GPT_OPTIONS", "")
     # [alic] end.
     # 模糊搜索匹配的最低相似度阈值
     fuzzy_match_cutoff: float = float(os.getenv("XIAOMUSIC_FUZZY_MATCH_CUTOFF", "0.6"))

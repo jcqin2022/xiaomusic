@@ -15,6 +15,12 @@ from logging.handlers import RotatingFileHandler
 # [alic] support websocket IO.
 from xiaomusic.socket import emit_message
 from broker.monitor import Monitor
+from ai.bot import get_bot
+from ai.bot.base_bot import BaseBot
+from ai.tts import TTS, EdgeTTS, MiTTS, AzureTTS
+from ai.tts.openai import OpenAITTS
+import functools
+from typing import AsyncIterator
 # [alic] end.
 from pathlib import Path
 
@@ -786,6 +792,7 @@ class XiaoMusic:
                 query = new_record.get("query", "").strip()
                 did = new_record.get("did", "").strip()
                 await self.do_check_cmd(did, query, False)
+                await self.do_check_talking(did, query)
                 answer = new_record.get("answer")
                 answers = new_record.get("answers", [{}])
                 if answers:
@@ -1335,6 +1342,27 @@ class XiaoMusic:
         await asyncio.sleep(1)
         self.monitor.run_start()
         self.log.info("Monitor task quit.")
+
+    async def start_stop_ai_task(self):
+        start = self.config.start_hour
+        stop = self.config.stop_hour
+        self.log.info("Monitor task will run between %d and %d.", start, stop)
+        await asyncio.sleep(1)
+        # self.monitor.run_start()
+        self.log.info("Monitor task quit.")
+
+    # start conversation
+    async def start_conversation(self, did="", arg1="", **kwargs):
+        return await self.devices[did].start_conversation(arg1)
+    
+    # stop conversation
+    async def stop_conversation(self, did="", arg1="", **kwargs):
+        return await self.devices[did].start_conversation(arg1)
+
+    # continue conversation
+    async def do_check_talking(self, did, query):
+        return await self.devices[did].do_check_talking(query)
+    
     # [alic] methods end.
 
 class XiaoMusicDevice:
@@ -1362,6 +1390,11 @@ class XiaoMusicDevice:
         self._stop_timer = None
         self._last_cmd = None
         self.update_playlist()
+
+        #alic start
+        self.in_conversation = False
+        self.chatbot: BaseBot = get_bot()
+        #alic end
 
     @property
     def did(self):
@@ -2059,4 +2092,79 @@ class XiaoMusicDevice:
                 self.log.debug(f"downloading: {msg}")
             else:
                 break
+    
+    @functools.cached_property
+    def tts(self) -> TTS:
+        if self.config.tts == "edge":
+            return EdgeTTS(self.mina_service, self.device_id, self.config)
+        elif self.config.tts == "azure":
+            return AzureTTS(self.mina_service, self.device_id, self.config)
+        elif self.config.tts == "openai":
+            return OpenAITTS(self.mina_service, self.device_id, self.config)
+        else:
+            return MiTTS(self.mina_service, self.device_id, self.config)
+        
+    # start conversation
+    async def start_conversation(self, arg1="", **kwargs):
+        if not self.in_conversation:
+            self.log.info("开始对话")
+            self.in_conversation = True
+            await self.wakeup_xiaoai()
+        await self.stop_if_xiaoai_is_playing()
+    
+    # stop conversation
+    async def stop_conversation(self, arg1="", **kwargs):
+        if self.in_conversation:
+            self.log.info("结束对话")
+            self.in_conversation = False
+        await self.stop_if_xiaoai_is_playing()
+
+    # continue conversation
+    async def do_check_talking(self, query):
+        if not self.in_conversation:
+            return
+        # drop 帮我回答
+        query = re.sub(rf"^({'|'.join(self.config.keyword)})", "", query)
+
+        self.log.info("-" * 20)
+        self.log.info("问题：" + query + "？")
+        if not self.chatbot.has_history():
+            query = f"{query}，{self.config.prompt}"
+        await self.stop_if_xiaoai_is_playing()
+        await self.do_tts(f"正在问{self.chatbot.name}请耐心等待")
+        self.log.info(f"以下是 {self.chatbot.name} 的回答: ", end="")
+        try:
+            await self.tts.synthesize(query, self.ask_gpt(query))
+        except Exception as e:
+            self.log.info(f"{self.chatbot.name} 回答出错 {str(e)}")
+        else:
+            self.log.info("回答完毕")
+        if self.in_conversation:
+            self.log.info(f"继续对话, 或结束对话")
+            await self.wakeup_xiaoai()
+
+    async def wakeup_xiaoai(self):
+        return await miio_command(
+            self.xiaomusic.miio_service,
+            self.device_id,
+            f"{self.config.wakeup_command} {"小爱同学"} 0",
+        )
+    
+    async def ask_gpt(self, query: str) -> AsyncIterator[str]:
+        if not self.config.stream:
+            if self.config.bot == "glm":
+                answer = self.chatbot.ask(query, **self.config.gpt_options)
+            else:
+                answer = await self.chatbot.ask(query, **self.config.gpt_options)
+            message = self._normalize(answer) if answer else ""
+            yield message
+            return
+    
+    @staticmethod
+    def _normalize(message: str) -> str:
+        message = message.strip().replace(" ", "--")
+        message = message.replace("\n", "，")
+        message = message.replace('"', "，")
+        return message
+            
     # [alic] end added methods for XiaoMusicDevice.
