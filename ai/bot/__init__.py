@@ -6,7 +6,7 @@ from ai.bot.newbing_bot import NewBingBot
 from ai.bot.glm_bot import GLMBot
 from ai.bot.gemini_bot import GeminiBot
 from ai.bot.qwen_bot import QwenBot
-from ai.bot.langchain_bot import LangChainBot
+# from ai.bot.langchain_bot import LangChainBot
 from xiaomusic.config import Config
 
 BOTS: dict[str, type[BaseBot]] = {
@@ -15,7 +15,7 @@ BOTS: dict[str, type[BaseBot]] = {
     "glm": GLMBot,
     "gemini": GeminiBot,
     "qwen": QwenBot,
-    "langchain": LangChainBot,
+    # "langchain": LangChainBot,
 }
 
 

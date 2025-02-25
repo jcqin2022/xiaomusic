@@ -17,7 +17,7 @@ from xiaomusic.socket import emit_message
 from broker.monitor import Monitor
 from ai.bot import get_bot
 from ai.bot.base_bot import BaseBot
-from ai.tts import TTS, EdgeTTS, MiTTS, AzureTTS
+from ai.tts import TTS, EdgeTTS, MiTTS #, AzureTTS
 from ai.tts.openai import OpenAITTS
 import functools
 from typing import AsyncIterator
@@ -2101,8 +2101,8 @@ class XiaoMusicDevice:
     def tts(self) -> TTS:
         if self.config.tts == "edge":
             return EdgeTTS(self.mina_service, self.device_id, self.config)
-        elif self.config.tts == "azure":
-            return AzureTTS(self.mina_service, self.device_id, self.config)
+        # elif self.config.tts == "azure":
+        #    return AzureTTS(self.mina_service, self.device_id, self.config)
         elif self.config.tts == "openai":
             return OpenAITTS(self.mina_service, self.device_id, self.config)
         else:
