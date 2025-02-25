@@ -1365,7 +1365,8 @@ class XiaoMusic:
         return await self.devices[did].do_check_talking(query)
     
     async def do_ask_gpt(self, did, query):
-        return await self.devices[did].ask_gpt(query)
+        async for response in self.devices[did].ask_gpt(query):
+            return response
     
     # [alic] methods end.
 

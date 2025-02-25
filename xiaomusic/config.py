@@ -163,7 +163,7 @@ class Config:
     bot: str = os.getenv("BOT", "chatgptapi")
     tts: str = os.getenv("TTS", "chatgpt")
     stream: bool = False
-    gpt_options: str = os.getenv("GPT_OPTIONS", "")
+    gpt_options: str = os.getenv("GPT_OPTIONS", "{}")
     openai_key: str = os.getenv("OPENAI_KEY", "")
     api_base: str = os.getenv("API_BASE", "")
     deployment_id: str = os.getenv("DEPLOYMENT_ID", "")
