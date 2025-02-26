@@ -782,7 +782,7 @@ class XiaoMusic:
             assert task is not None  # to keep the reference to task, do not remove this
             monitor_task = asyncio.create_task(self.start_stop_monitor_task())
             assert monitor_task is not None  # to keep the reference to task, do not remove this
-            await self.do_ask_gpt("77999771", "hello")
+            # await self.do_ask_gpt("77999771", "hello")
             # [alic] end.
             while True:
                 self.polling_event.set()
@@ -1078,6 +1078,7 @@ class XiaoMusic:
 
     # 停止
     async def stop(self, did="", arg1="", **kwargs):
+        await self.devices[did].stop_conversation()
         return await self.devices[did].stop(arg1=arg1)
 
     # 定时关机
@@ -2116,31 +2117,30 @@ class XiaoMusicDevice:
             self.log.info("开始对话")
             self.in_conversation = True
             await self.wakeup_xiaoai()
-        await self.stop_if_xiaoai_is_playing()
     
     # stop conversation
     async def stop_conversation(self, arg1="", **kwargs):
         if self.in_conversation:
             self.log.info("结束对话")
             self.in_conversation = False
-        await self.stop_if_xiaoai_is_playing()
+        await self.stop_if_xiaoai_is_playing(self.device_id)
 
     # continue conversation
     async def do_check_talking(self, query):
         if not self.in_conversation:
             return
-        # drop 帮我回答
-        query = re.sub(rf"^({'|'.join(self.config.keyword)})", "", query)
-
         self.log.info("-" * 20)
         self.log.info("问题：" + query + "？")
         if not self.chatbot.has_history():
             query = f"{query}，{self.config.prompt}"
-        await self.stop_if_xiaoai_is_playing()
+        await self.stop_if_xiaoai_is_playing(self.device_id)
         await self.do_tts(f"正在问{self.chatbot.name}请耐心等待")
-        self.log.info(f"以下是 {self.chatbot.name} 的回答: ", end="")
+        self.log.info(f"以下是 {self.chatbot.name} 的回答: ")
         try:
-            await self.tts.synthesize(query, self.ask_gpt(query))
+            async for response in self.ask_gpt(query):
+                self.log.info(response)
+                await self.do_tts(response)
+            # await self.tts.synthesize(query, )
         except Exception as e:
             self.log.info(f"{self.chatbot.name} 回答出错 {str(e)}")
         else:

@@ -158,7 +158,7 @@ class Config:
     log_level: str = os.getenv("XIAOMUSIC_LOG_LEVEL", "INFO")
     uvicorn_log_level: str = os.getenv("UVICORN_LOG_LEVEL", "INFO")
     start_hour:int = int(os.getenv("XIAOMUSIC_START_HOUR", "8"))
-    stop_hour:int = int(os.getenv("XIAOMUSIC_START_HOUR", "22"))
+    stop_hour:int = int(os.getenv("XIAOMUSIC_START_HOUR", "23"))
     mqtt_port: int = int(os.getenv("MQTT_PORT", "11883"))  # 监听端口
     wakeup_command: str = os.getenv("MIIO_WAKEUP_CMD", "5-1")
     bot: str = os.getenv("BOT", "chatgptapi")
