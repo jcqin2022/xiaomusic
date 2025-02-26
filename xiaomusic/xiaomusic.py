@@ -1399,6 +1399,7 @@ class XiaoMusicDevice:
         #alic start
         self.in_conversation = False
         self.chatbot: BaseBot = get_bot(self.config)
+        self.chatbot.set_prompt(self.config.prompt)
         #alic end
 
     @property
@@ -2156,14 +2157,17 @@ class XiaoMusicDevice:
         )
     
     async def ask_gpt(self, query: str) -> AsyncIterator[str]:
-        if not self.config.stream:
-            if self.config.bot == "glm":
-                answer = self.chatbot.ask(query, **self.config.gpt_options)
-            else:
-                answer = await self.chatbot.ask(query, **self.config.gpt_options)
-            message = self._normalize(answer) if answer else ""
-            yield message
-            return
+        try:
+            if not self.config.stream:
+                if self.config.bot == "glm":
+                    answer = self.chatbot.ask(query, **self.config.gpt_options)
+                else:
+                    answer = await self.chatbot.ask(query, **self.config.gpt_options)
+                message = self._normalize(answer) if answer else ""
+                yield message
+        except Exception as e:
+            self.log.info(f"{self.chatbot.name} 回答出错 {str(e)}")
+            
     
     @staticmethod
     def _normalize(message: str) -> str:

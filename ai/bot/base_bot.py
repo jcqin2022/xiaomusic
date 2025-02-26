@@ -31,13 +31,21 @@ class BaseBot(ABC):
     @abstractmethod
     def change_prompt(self, new_prompt: str) -> None:
         pass
+    
+    @abstractmethod
+    def set_prompt(self, new_prompt: str) -> None:
+        pass
 
 
 class ChatHistoryMixin:
     history: list[tuple[str, str]]
+    prompt: str
 
     def has_history(self) -> bool:
         return bool(self.history)
+
+    def set_prompt(self, prompt: str) -> None:
+        self.prompt = prompt
 
     def change_prompt(self, new_prompt: str) -> None:
         if self.history:
@@ -46,6 +54,7 @@ class ChatHistoryMixin:
 
     def get_messages(self) -> list[dict]:
         ms = []
+        ms.append({"role": "system", "content": self.prompt})
         for h in self.history:
             ms.append({"role": "user", "content": h[0]})
             ms.append({"role": "assistant", "content": h[1]})

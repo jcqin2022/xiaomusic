@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import httpx
 from rich import print
@@ -9,45 +9,36 @@ from rich import print
 from .base_bot import BaseBot, ChatHistoryMixin
 from xiaomusic.utils import split_sentences
 
-if TYPE_CHECKING:
-    import openai
+from azure.ai.inference import ChatCompletionsClient
+from azure.core.credentials import AzureKeyCredential
 
 #gpt-4o (version:2024-08-06)
-DEPLOYMENT_NAME = "gpt-4o"
+DEPLOYMENT_NAME = "DeepSeek-R1"
 API_KEY = "fDZKz5jA3B1YozrixDFi8DTAic5XcdTW6pjwepPjXwrTL3PbfndLJQQJ99BBACi0881XJ3w3AAAAACOGDwd7"
-AZURE_ENDPOINT = "https://jcqin-m7cp47wm-japaneast.openai.azure.com/" 
+AZURE_ENDPOINT = "https://jcqin-m7cp47wm-japaneast.services.ai.azure.com/models" 
 API_VERSION = "2024-05-01-preview"
 
 @dataclasses.dataclass
-class ChatGPTBot(ChatHistoryMixin, BaseBot):
-    name: ClassVar[str] = "ChatGPT"
-    default_options: ClassVar[dict[str, str]] = {"model": "gpt-4o"}
-    openai_key: str
+class DeepSeekBot(ChatHistoryMixin, BaseBot):
+    name: ClassVar[str] = "DeepSeek"
+    default_options: ClassVar[dict[str, str]] = {"model": "DeepSeek-R1"}
+    key: str
     api_base: str | None = None
     proxy: str | None = None
     deployment_id: str | None = None
     history: list[tuple[str, str]] = dataclasses.field(default_factory=list, init=False)
 
-    def _make_openai_client(self, sess: httpx.AsyncClient) -> openai.AsyncOpenAI:
-        import openai
-
-        if self.api_base and self.api_base.rstrip("/").endswith(".azure.com"):
-            return openai.AsyncAzureOpenAI(
-                api_key=API_KEY, #self.openai_key,
-                azure_endpoint=AZURE_ENDPOINT, #self.api_base,
-                api_version=API_VERSION, #"2024-02-15-preview",
-                azure_deployment=DEPLOYMENT_NAME, #self.deployment_id,
-                http_client=sess,
-            )
+    def _make_client(self, sess: httpx.AsyncClient) -> ChatCompletionsClient:
+        if self.api_base and "azure.com" in self.api_base:
+            client = ChatCompletionsClient(endpoint=AZURE_ENDPOINT, credential=AzureKeyCredential(API_KEY))
+            return client
         else:
-            return openai.AsyncOpenAI(
-                api_key=self.openai_key, http_client=sess, base_url=self.api_base
-            )
+            return None
 
     @classmethod
     def from_config(cls, config):
         return cls(
-            openai_key=config.openai_key,
+            key=config.openai_key,
             api_base=config.api_base,
             proxy=config.proxy,
             deployment_id=config.deployment_id,
@@ -61,9 +52,15 @@ class ChatGPTBot(ChatHistoryMixin, BaseBot):
         if self.proxy:
             httpx_kwargs["proxies"] = self.proxy
         async with httpx.AsyncClient(trust_env=True, **httpx_kwargs) as sess:
-            client = self._make_openai_client(sess)
+            client = self._make_client(sess)
             try:
-                completion = await client.chat.completions.create(messages=ms, **kwargs)
+                completion = client.complete(
+                    messages=ms,
+                    temperature=0.3,  # 降低随机性，输出更直接
+                    max_tokens=100,   # 限制回答长度
+                    top_p=0.9,         # 限制生成多样性
+                    **kwargs
+                    )
             except Exception as e:
                 print(str(e))
                 return ""
@@ -81,11 +78,17 @@ class ChatGPTBot(ChatHistoryMixin, BaseBot):
         if self.proxy:
             httpx_kwargs["proxies"] = self.proxy
         async with httpx.AsyncClient(trust_env=True, **httpx_kwargs) as sess:
-            client = self._make_openai_client(sess)
+            client = self._make_client(sess)
             try:
-                completion = await client.chat.completions.create(
-                    messages=ms, stream=True, **kwargs
-                )
+                completion = await client.complete(
+                    messages=ms, 
+                    model = DEPLOYMENT_NAME,
+                    temperature=0.3,  # 降低随机性，输出更直接
+                    max_tokens=100,   # 限制回答长度
+                    top_p=0.9,         # 限制生成多样性
+                    stream=True,
+                    **kwargs
+                    )
             except Exception as e:
                 print(str(e))
                 return

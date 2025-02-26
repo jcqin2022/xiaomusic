@@ -63,6 +63,7 @@ def default_user_key_word_dict():
         "测试链接": 'exec#httpget("https://github.com/hanxi/xiaomusic")',
         "开始聊天": 'start_conversation',
         "结束聊天": 'stop_conversation',
+        "停止": 'stop_conversation',
     }
 
 
@@ -161,12 +162,13 @@ class Config:
     mqtt_port: int = int(os.getenv("MQTT_PORT", "11883"))  # 监听端口
     wakeup_command: str = os.getenv("MIIO_WAKEUP_CMD", "5-1")
     bot: str = os.getenv("BOT", "chatgptapi")
+    prompt: str = os.getenv("BOT", "You are a helpful assistant.")
     tts: str = os.getenv("TTS", "chatgpt")
     stream: bool = False
-    gpt_options: str = os.getenv("GPT_OPTIONS", "{}")
+    gpt_options: dict[str, any] = field(default_factory=dict)
     openai_key: str = os.getenv("OPENAI_KEY", "")
-    api_base: str = os.getenv("API_BASE", "")
-    deployment_id: str = os.getenv("DEPLOYMENT_ID", "")
+    api_base: str = os.getenv("API_BASE", "https://jcqin-m7cp47wm-japaneast.openai.azure.com/")
+    deployment_id: str = os.getenv("DEPLOYMENT_ID", "gpt-4o")
     # [alic] end.
     # 模糊搜索匹配的最低相似度阈值
     fuzzy_match_cutoff: float = float(os.getenv("XIAOMUSIC_FUZZY_MATCH_CUTOFF", "0.6"))

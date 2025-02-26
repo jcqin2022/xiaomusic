@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from ai.bot.base_bot import BaseBot
-from ai.bot.chatgptapi_bot import ChatGPTBot
-from ai.bot.newbing_bot import NewBingBot
-from ai.bot.glm_bot import GLMBot
-from ai.bot.gemini_bot import GeminiBot
-from ai.bot.qwen_bot import QwenBot
+from .base_bot import BaseBot
+from .chatgptapi_bot import ChatGPTBot
+from .newbing_bot import NewBingBot
+from .glm_bot import GLMBot
+from .gemini_bot import GeminiBot
+from .qwen_bot import QwenBot
+from .deepseek_bot import DeepSeekBot
 # from ai.bot.langchain_bot import LangChainBot
 from xiaomusic.config import Config
 
@@ -16,6 +17,7 @@ BOTS: dict[str, type[BaseBot]] = {
     "gemini": GeminiBot,
     "qwen": QwenBot,
     # "langchain": LangChainBot,
+    "deepseek": DeepSeekBot,
 }
 
 
@@ -34,4 +36,5 @@ __all__ = [
     "QwenBot",
     "get_bot",
     "LangChainBot",
+    "DeepSeekBot",
 ]

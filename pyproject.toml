@@ -39,6 +39,7 @@ dependencies = [
     "dashscope>=1.10.0",
     "azure-cognitiveservices-speech>=1.37.0",
     "langchain-community>=0.0.32",
+    "azure-ai-inference>=1.0.0b9",
 ]
 requires-python = ">=3.10,<=3.12"
 readme = "README.md"
