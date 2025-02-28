@@ -33,6 +33,8 @@ from xiaomusic.config import (
     KEY_WORD_ARG_BEFORE_DICT,
     Config,
     Device,
+    HARDWARE_COMMAND_DICT,
+    DEFAULT_COMMAND,
 )
 from xiaomusic.const import (
     COOKIE_TEMPLATE,
@@ -1359,7 +1361,7 @@ class XiaoMusic:
     
     # stop conversation
     async def stop_conversation(self, did="", arg1="", **kwargs):
-        return await self.devices[did].start_conversation(arg1)
+        return await self.devices[did].stop_conversation(arg1)
 
     # continue conversation
     async def do_check_talking(self, did, query):
@@ -2150,10 +2152,13 @@ class XiaoMusicDevice:
             await self.wakeup_xiaoai()
 
     async def wakeup_xiaoai(self):
+        WAKEUP_KEYWORD = "小爱同学"
+        hardware = self.device.hardware
+        cmd = HARDWARE_COMMAND_DICT.get(hardware, DEFAULT_COMMAND)[1]
         return await miio_command(
             self.xiaomusic.miio_service,
             self.device_id,
-            f'{self.config.wakeup_command} "小爱同学" 0',
+            f'{cmd} {WAKEUP_KEYWORD} 0',
         )
     
     async def ask_gpt(self, query: str) -> AsyncIterator[str]:

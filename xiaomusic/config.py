@@ -37,6 +37,8 @@ HARDWARE_COMMAND_DICT = {
     "X10A": ("7-3", "7-4", "2-1"),  # 小米智能家庭屏10
     # add more here
 }
+DEFAULT_COMMAND = ("5-1", "5-5")
+# [alic] end.
 
 # 默认口令
 def default_key_word_dict():
